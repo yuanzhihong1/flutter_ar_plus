@@ -20,6 +20,7 @@ dependencies:
 
   camera: ^0.12.2
   flutter_scene: ^0.24.3
+  image: ^4.12.0
   mediapipe_face_mesh: ^3.2.2
   vector_math: ^2.4.4
 
@@ -62,6 +63,7 @@ flutter:
 
   assets:
     - assets/face_test.jpg
+    - assets/stack_chan_model.glb
 
   # To add assets to your application, add an assets section, like this:
   # assets:

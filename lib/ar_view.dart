@@ -47,6 +47,9 @@ enum ArViewErrorCode {
   /// The MediaPipe face pipeline failed.
   faceTrackingFailed,
 
+  /// A glTF/GLB model could not be loaded.
+  modelLoadFailed,
+
   /// This platform does not provide the required camera/FFI support.
   unsupportedPlatform,
 }
@@ -107,18 +110,313 @@ abstract class ArViewDelegate {
   void didRemoveNode(ArView view, ArFaceAnchor anchor) {}
 }
 
+/// Imperative controls for an [ArView], modeled after the useful parts of
+/// `ARSCNView`'s node and projection APIs.
+///
+/// A controller writes to the app-owned [Scene] directly, so a node can be
+/// prepared before the view is mounted. The view is only required for
+/// screen-space queries such as [projectPoint] and [hitTest].
+///
+/// All positions are expressed in AR camera space: the camera is at the
+/// origin, +X points right, +Y points up, and +Z points away from the camera.
+/// For a node attached to another node, [setPosition] changes its position
+/// relative to that parent, just like `SCNNode.position`.
+///
+/// ```dart
+/// final scene = Scene();
+/// final arController = ARViewController(scene: scene);
+///
+/// arController.addNode(
+///   Node(name: 'cube')..addComponent(
+///     MeshComponent(Mesh(CuboidGeometry(Vector3.all(0.2)), material)),
+///   ),
+///   position: Vector3(0, 0, 1),
+/// );
+///
+/// ARView(scene: scene, controller: arController);
+/// ```
+class ARViewController {
+  /// Creates a controller backed by [scene].
+  ///
+  /// The same scene must be supplied to [ArView.scene]. The scene remains
+  /// application-owned and is not disposed by the controller or the view.
+  ARViewController({required this.scene});
+
+  /// The scene controlled by this controller.
+  final Scene scene;
+
+  _ArViewState? _view;
+  int _nextGeneratedName = 1;
+
+  /// Whether this controller is currently mounted to an [ArView].
+  bool get isAttached => _view?.mounted ?? false;
+
+  /// The mounted view's current logical size.
+  ///
+  /// Throws a [StateError] when called before the view has been mounted.
+  Size get viewportSize {
+    final _ArViewState view = _requireView();
+    return view._viewportSize;
+  }
+
+  /// The camera used to render the AR scene.
+  ///
+  /// This is the Flutter Scene equivalent of `ARSCNView.pointOfView`.
+  /// Throws a [StateError] when called before the view has been mounted.
+  Camera get pointOfView => _requireView().pointOfView;
+
+  /// Adds [node] to the root of [scene] and applies optional local transforms.
+  ///
+  /// If [node] already belongs to this scene, this method updates its
+  /// placement without adding it a second time. Nodes owned by another scene
+  /// are rejected.
+  ///
+  /// Prefer passing an explicit camera-space [position]. A common visible
+  /// placement is `Vector3(0, 0, 1)`, one meter in front of the camera.
+  Node addNode(
+    Node node, {
+    String? name,
+    Vector3? position,
+    Quaternion? rotation,
+    Vector3? scale,
+  }) {
+    _ensureNodeBelongsToScene(node);
+    final String trimmedName = name?.trim() ?? '';
+    if (trimmedName.isNotEmpty) {
+      node.name = trimmedName;
+    } else if (node.name.isEmpty) {
+      node.name = 'ar_node_${_nextGeneratedName++}';
+    }
+    _applyLocalTransform(
+      node,
+      position: position,
+      rotation: rotation,
+      scale: scale,
+    );
+    if (node.parent == null) {
+      scene.add(node);
+    }
+    return node;
+  }
+
+  /// Loads a runtime glTF binary (`.glb`) and adds it in front of the camera.
+  ///
+  /// [position] defaults to `Vector3(0, 0, 1)`, which places the model one
+  /// meter from the camera. Use [scale] to fit models authored at a different
+  /// unit size.
+  ///
+  /// Throws an [ArViewException] with [ArViewErrorCode.modelLoadFailed] when
+  /// the asset cannot be decoded.
+  Future<Node> addModel(
+    String assetPath, {
+    String? name,
+    Vector3? position,
+    Quaternion? rotation,
+    Vector3? scale,
+    int? maxTextureSize,
+  }) async {
+    late final Node node;
+    try {
+      node = await Node.fromGlbAsset(assetPath, maxTextureSize: maxTextureSize);
+    } catch (error, stackTrace) {
+      throw ArViewException(
+        ArViewErrorCode.modelLoadFailed,
+        'Unable to load model "$assetPath": $error',
+        cause: error,
+        stackTrace: stackTrace,
+      );
+    }
+    return addNode(
+      node,
+      name: name,
+      position: position ?? Vector3(0.0, 0.0, 1.0),
+      rotation: rotation,
+      scale: scale,
+    );
+  }
+
+  /// Removes [node] from the scene. Does nothing if it is already detached.
+  void removeNode(Node node) {
+    if (node.parent != null) {
+      node.detach();
+    }
+  }
+
+  /// Finds the first node named [name] in the scene graph.
+  Node? nodeNamed(String name) => scene.root.getChildByName(name);
+
+  /// Sets [node]'s position relative to its parent.
+  void setPosition(Node node, Vector3 position) {
+    node.position = position.clone();
+  }
+
+  /// Moves [node] by [offset] relative to its parent.
+  void moveNode(Node node, Vector3 offset) {
+    node.position = node.position + offset;
+  }
+
+  /// Sets [node]'s local rotation.
+  void setRotation(Node node, Quaternion rotation) {
+    node.rotation = rotation.clone();
+  }
+
+  /// Sets [node]'s local scale.
+  void setScale(Node node, Vector3 scale) {
+    node.scale = scale.clone();
+  }
+
+  /// Replaces [node]'s local transform.
+  void setTransform(Node node, Matrix4 transform) {
+    node.localTransform = transform.clone();
+  }
+
+  /// Sets [node]'s world-space position, accounting for its parent transform.
+  void setWorldPosition(Node node, Vector3 position) {
+    final Matrix4 transform = node.globalTransform.clone()
+      ..setTranslation(position);
+    node.globalTransform = transform;
+  }
+
+  /// Replaces [node]'s world-space transform.
+  void setWorldTransform(Node node, Matrix4 transform) {
+    node.globalTransform = transform.clone();
+  }
+
+  /// Returns [node]'s world-space position in AR camera space.
+  Vector3 getWorldPosition(Node node) => node.globalTransform.getTranslation();
+
+  /// Projects a world-space point to logical viewport coordinates.
+  ///
+  /// This is the Flutter Scene counterpart of `ARSCNView.projectPoint`.
+  /// Returns `null` for points at or behind the camera plane.
+  Offset? projectPoint(Vector3 point) {
+    final _ArViewState view = _requireView();
+    if (view._viewportSize.isEmpty) {
+      return null;
+    }
+    return view.pointOfView.worldToScreen(point, view._viewportSize);
+  }
+
+  /// Converts a logical viewport point into a world-space point at [distance]
+  /// meters from the camera.
+  ///
+  /// The counterpart of `ARSCNView.unprojectPoint` for a camera without a
+  /// depth map. Throws a [StateError] when the view is not mounted.
+  Vector3 unprojectPoint(Offset point, {double distance = 1.0}) {
+    final _ArViewState view = _requireView();
+    return view.pointOfView
+        .screenPointToRay(point, view._viewportSize)
+        .at(distance);
+  }
+
+  /// Returns the nearest rendered surface under [point], if any.
+  ///
+  /// This performs a mesh raycast, the closest Flutter Scene equivalent of
+  /// `ARSCNView.hitTest(_:options:)` without an ARKit depth map.
+  SceneRaycastHit? hitTest(Offset point) {
+    final _ArViewState view = _requireView();
+    if (view._viewportSize.isEmpty) {
+      return null;
+    }
+    return scene.raycast(
+      view.pointOfView.screenPointToRay(point, view._viewportSize),
+    );
+  }
+
+  /// Returns every rendered surface under [point], nearest first.
+  List<SceneRaycastHit> hitTestAll(Offset point) {
+    final _ArViewState view = _requireView();
+    if (view._viewportSize.isEmpty) {
+      return const <SceneRaycastHit>[];
+    }
+    return scene.raycastAll(
+      view.pointOfView.screenPointToRay(point, view._viewportSize),
+    );
+  }
+
+  void _applyLocalTransform(
+    Node node, {
+    Vector3? position,
+    Quaternion? rotation,
+    Vector3? scale,
+  }) {
+    if (position != null) {
+      node.position = position.clone();
+    }
+    if (rotation != null) {
+      node.rotation = rotation.clone();
+    }
+    if (scale != null) {
+      node.scale = scale.clone();
+    }
+  }
+
+  void _ensureNodeBelongsToScene(Node node) {
+    if (node.parent == null) {
+      return;
+    }
+    Node root = node;
+    while (root.parent != null) {
+      root = root.parent!;
+    }
+    if (!identical(root, scene.root)) {
+      throw ArgumentError.value(
+        node,
+        'node',
+        'The node already belongs to another scene.',
+      );
+    }
+  }
+
+  _ArViewState _requireView() {
+    final _ArViewState? view = _view;
+    if (view == null || !view.mounted) {
+      throw StateError(
+        'ARViewController is not attached to an ArView. '
+        'Pass it to ArView.controller and wait until the view is mounted.',
+      );
+    }
+    return view;
+  }
+
+  void _attach(_ArViewState view) {
+    final _ArViewState? attached = _view;
+    if (attached != null && !identical(attached, view)) {
+      throw StateError(
+        'ARViewController is already attached to another ArView.',
+      );
+    }
+    if (!identical(scene, view.widget.scene)) {
+      throw StateError(
+        'ARViewController.scene must be the same Scene passed to ArView.',
+      );
+    }
+    _view = view;
+  }
+
+  void _detach(_ArViewState view) {
+    if (identical(_view, view)) {
+      _view = null;
+    }
+  }
+}
+
 /// A tracked face anchor backed by a Flutter Scene [Node].
 ///
 /// The transform is expressed in meters in the AR camera space: +X points
-/// right, +Y points up, and +Z points away from the camera. The node is kept
-/// at the nose tip and follows the estimated head pose. Child content should
+/// right, +Y points up, and +Z points away from the camera. The node follows
+/// the estimated head pose and is placed at either the nose tip or the face
+/// center according to [origin]. Child content should
 /// use Flutter Scene's local +Z-forward convention so its front follows the
 /// direction the tracked face is looking.
 class ArFaceAnchor {
-  ArFaceAnchor._(this.identifier, this._node);
+  ArFaceAnchor._(this.identifier, this._node, this.origin);
 
   /// Stable identifier while the face remains tracked.
   final int identifier;
+
+  /// Coordinate-system origin used by this anchor.
+  final ArFaceAnchorOrigin origin;
 
   Node _node;
   Matrix4 _transform = Matrix4.identity();
@@ -126,6 +424,7 @@ class ArFaceAnchor {
   Offset _screenPosition = Offset.zero;
   FaceMeshResult? _mesh;
   FaceMeshHeadPose? _headPose;
+  FaceBlendshapes? _blendshapes;
   double _distanceMeters = 0;
   double _faceWidthMeters = 0;
 
@@ -153,6 +452,13 @@ class ArFaceAnchor {
   /// Current head rotation estimate.
   FaceMeshHeadPose get headPose => _headPose!;
 
+  /// The 52 ARKit-style facial coefficients for the current frame.
+  ///
+  /// This is `null` unless [ArView.enableFaceBlendshapes] is enabled. The
+  /// coefficients map directly to the categories used by ARKit face anchors,
+  /// which makes ports of ARKit expression logic straightforward.
+  FaceBlendshapes? get blendshapes => _blendshapes;
+
   /// All 478 landmarks for the current frame.
   List<FaceMeshLandmark> get landmarks => mesh.landmarks;
 
@@ -162,6 +468,7 @@ class ArFaceAnchor {
     required Offset screenPosition,
     required FaceMeshResult mesh,
     required FaceMeshHeadPose headPose,
+    required FaceBlendshapes? blendshapes,
     required double distanceMeters,
     required double faceWidthMeters,
   }) {
@@ -170,6 +477,7 @@ class ArFaceAnchor {
     _screenPosition = screenPosition;
     _mesh = mesh;
     _headPose = headPose;
+    _blendshapes = blendshapes;
     _distanceMeters = distanceMeters;
     _faceWidthMeters = faceWidthMeters;
   }
@@ -181,7 +489,9 @@ class ArFaceAnchor {
 /// from face landmarks into a Flutter Scene perspective camera. The supplied
 /// [scene] stays application-owned. The view creates one persistent
 /// [ArFaceAnchor.node] while a face is tracked and updates its transform every
-/// inference frame.
+/// inference frame. The node is placed at the nose by default; set
+/// [faceAnchorOrigin] to [ArFaceAnchorOrigin.faceCenter] when porting code that
+/// uses ARKit face-center coordinates.
 ///
 /// Face tracking runs in a worker isolate. Camera permission is requested with
 /// `permission_handler` before the camera controller is created.
@@ -190,6 +500,7 @@ class ArView extends StatefulWidget {
   const ArView({
     required this.scene,
     super.key,
+    this.controller,
     this.delegate,
     this.onFaceAnchorUpdated,
     this.cameraLensDirection = CameraLensDirection.front,
@@ -198,6 +509,8 @@ class ArView extends StatefulWidget {
     this.preferredFramesPerSecond = 30,
     this.anchorLostGracePeriod = const Duration(milliseconds: 350),
     this.isFaceTrackingEnabled = true,
+    this.enableFaceBlendshapes = false,
+    this.faceAnchorOrigin = ArFaceAnchorOrigin.noseTip,
     this.showCameraPreview = true,
     this.showsStatistics = false,
     this.loadingBuilder,
@@ -214,6 +527,12 @@ class ArView extends StatefulWidget {
 
   /// Application-owned Flutter Scene rendered over the camera feed.
   final Scene scene;
+
+  /// Imperative controller for adding, removing, and moving scene nodes.
+  ///
+  /// The controller must use the same [scene]. It may be used before this
+  /// widget is mounted for node and transform operations.
+  final ARViewController? controller;
 
   /// Receives node and face-anchor lifecycle callbacks.
   final ArViewDelegate? delegate;
@@ -245,6 +564,20 @@ class ArView extends StatefulWidget {
   /// Whether face inference is enabled.
   final bool isFaceTrackingEnabled;
 
+  /// Whether to calculate MediaPipe's 52 ARKit-style facial coefficients.
+  ///
+  /// Disabled by default because it adds one inference pass per frame. When
+  /// enabled, the latest coefficients are exposed through
+  /// [ArFaceAnchor.blendshapes].
+  final bool enableFaceBlendshapes;
+
+  /// Origin used for [ArFaceAnchor.node] and [ArFaceAnchor.transform].
+  ///
+  /// [ArFaceAnchorOrigin.noseTip] is the default and works well for small
+  /// face-worn props. Use [ArFaceAnchorOrigin.faceCenter] when porting ARKit
+  /// code that applies offsets relative to Apple's face-anchor origin.
+  final ArFaceAnchorOrigin faceAnchorOrigin;
+
   /// Whether the live camera image is visible behind the scene.
   final bool showCameraPreview;
 
@@ -263,6 +596,12 @@ class ArView extends StatefulWidget {
   @override
   State<ArView> createState() => _ArViewState();
 }
+
+/// Canonical Apple-style name for [ArView].
+///
+/// `ARView` is the preferred spelling in new code. The older [ArView] name is
+/// retained as the underlying implementation and remains source-compatible.
+typedef ARView = ArView;
 
 Future<FaceMeshInferencePipeline> _createFaceMeshPipeline(
   FaceMeshModel model,
@@ -296,6 +635,9 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
   int _macOSCameraSession = 0;
   FaceMeshIsolatePipeline? _pipeline;
   Future<FaceMeshIsolatePipeline>? _pipelineFuture;
+  FaceBlendshapesProcessor? _blendshapesProcessor;
+  Future<FaceBlendshapesProcessor>? _blendshapesProcessorFuture;
+  bool _blendshapeErrorReported = false;
 
   ArFaceAnchor? _faceAnchor;
   Timer? _faceLostTimer;
@@ -320,12 +662,17 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.controller?._attach(this);
     unawaited(_start());
   }
 
   @override
   void didUpdateWidget(ArView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.controller, widget.controller)) {
+      oldWidget.controller?._detach(this);
+      widget.controller?._attach(this);
+    }
     if (!identical(oldWidget.scene, widget.scene)) {
       _removeFaceAnchor(scene: oldWidget.scene, notify: false);
       _faceLostTimer?.cancel();
@@ -337,6 +684,9 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     }
     if (oldWidget.isFaceTrackingEnabled && !widget.isFaceTrackingEnabled) {
       _removeFaceAnchor();
+    }
+    if (oldWidget.enableFaceBlendshapes && !widget.enableFaceBlendshapes) {
+      _closeBlendshapesProcessor();
     }
   }
 
@@ -357,6 +707,62 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
         _removeFaceAnchor();
         unawaited(_stopCamera());
     }
+  }
+
+  Future<FaceBlendshapesProcessor> _ensureBlendshapesProcessor() {
+    final FaceBlendshapesProcessor? existing = _blendshapesProcessor;
+    if (existing != null) {
+      return Future<FaceBlendshapesProcessor>.value(existing);
+    }
+    final Future<FaceBlendshapesProcessor>? pending =
+        _blendshapesProcessorFuture;
+    if (pending != null) {
+      return pending;
+    }
+    final Future<FaceBlendshapesProcessor> loading =
+        FaceBlendshapesProcessor.create(delegate: FaceMeshDelegate.xnnpack);
+    _blendshapesProcessorFuture = loading;
+    loading.then(
+      (FaceBlendshapesProcessor processor) {
+        if (_disposed || !widget.enableFaceBlendshapes) {
+          processor.close();
+        } else {
+          _blendshapesProcessor = processor;
+        }
+      },
+      onError: (Object _) {
+        if (identical(_blendshapesProcessorFuture, loading)) {
+          _blendshapesProcessorFuture = null;
+        }
+      },
+    );
+    return loading;
+  }
+
+  Future<FaceBlendshapes?> _faceBlendshapesFor(FaceMeshResult mesh) async {
+    if (!widget.enableFaceBlendshapes) {
+      return null;
+    }
+    try {
+      final FaceBlendshapesProcessor processor =
+          await _ensureBlendshapesProcessor();
+      if (_disposed || !widget.enableFaceBlendshapes) {
+        return null;
+      }
+      return processor.process(mesh);
+    } catch (error) {
+      if (!_blendshapeErrorReported && kDebugMode) {
+        _blendshapeErrorReported = true;
+        debugPrint('ArView: face blendshapes disabled: $error');
+      }
+      return null;
+    }
+  }
+
+  void _closeBlendshapesProcessor() {
+    _blendshapesProcessor?.close();
+    _blendshapesProcessor = null;
+    _blendshapesProcessorFuture = null;
   }
 
   Future<FaceMeshIsolatePipeline> _ensurePipeline() {
@@ -787,9 +1193,13 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
         _markFaceLost();
         return;
       }
+      final FaceBlendshapes? blendshapes = await _faceBlendshapesFor(mesh);
+      if (!_active || _disposed || !identical(pipeline, _pipeline)) {
+        return;
+      }
       _faceLostTimer?.cancel();
       _faceLostTimer = null;
-      _updateFaceAnchor(mesh);
+      _updateFaceAnchor(mesh, blendshapes: blendshapes);
     } catch (error, stackTrace) {
       if (_reportedTrackingError || !_active || _disposed) {
         return;
@@ -810,12 +1220,13 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     }
   }
 
-  void _updateFaceAnchor(FaceMeshResult mesh) {
+  void _updateFaceAnchor(FaceMeshResult mesh, {FaceBlendshapes? blendshapes}) {
     if (_viewportSize.isEmpty) {
       return;
     }
     final ArFacePose? pose = ArFacePoseMapper(
       verticalFovDegrees: widget.cameraVerticalFovDegrees,
+      anchorOrigin: widget.faceAnchorOrigin,
     ).map(mesh, viewportSize: _viewportSize);
     if (pose == null) {
       _markFaceLost();
@@ -826,6 +1237,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     final ArFaceAnchor anchor = _faceAnchor ??= ArFaceAnchor._(
       _nextAnchorId++,
       Node(name: 'ar_face_anchor_${_nextAnchorId - 1}'),
+      widget.faceAnchorOrigin,
     );
     anchor._update(
       transform: pose.transform,
@@ -833,6 +1245,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
       screenPosition: pose.screenPosition,
       mesh: mesh,
       headPose: pose.headPose,
+      blendshapes: blendshapes,
       distanceMeters: pose.distanceMeters,
       faceWidthMeters: pose.faceWidthMeters,
     );
@@ -1169,8 +1582,22 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     }
   }
 
+  /// The camera used to render this view.
+  ///
+  /// Its transform matches the camera preview: the camera is at the origin,
+  /// looks toward +Z, and uses [ArView.cameraVerticalFovDegrees].
+  PerspectiveCamera get pointOfView => PerspectiveCamera(
+    fovRadiansY: widget.cameraVerticalFovDegrees * math.pi / 180.0,
+    position: Vector3.zero(),
+    target: Vector3(0.0, 0.0, 1.0),
+    up: Vector3(0.0, 1.0, 0.0),
+    fovNear: 0.02,
+    fovFar: 20.0,
+  );
+
   @override
   void dispose() {
+    widget.controller?._detach(this);
     _disposed = true;
     _generation++;
     WidgetsBinding.instance.removeObserver(this);
@@ -1181,6 +1608,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     final Future<FaceMeshIsolatePipeline>? pendingPipeline = _pipelineFuture;
     _pipeline = null;
     _pipelineFuture = null;
+    _closeBlendshapesProcessor();
     unawaited(_closePipeline(pipeline));
     if (pendingPipeline != null) {
       pendingPipeline.then<void>(
@@ -1218,15 +1646,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
                   child: SceneView(
                     widget.scene,
                     maxFrameRate: widget.preferredFramesPerSecond.toDouble(),
-                    camera: PerspectiveCamera(
-                      fovRadiansY:
-                          widget.cameraVerticalFovDegrees * math.pi / 180.0,
-                      position: Vector3.zero(),
-                      target: Vector3(0.0, 0.0, 1.0),
-                      up: Vector3(0.0, 1.0, 0.0),
-                      fovNear: 0.02,
-                      fovFar: 20.0,
-                    ),
+                    camera: pointOfView,
                     loadingBuilder: (BuildContext context, double progress) =>
                         const SizedBox.shrink(),
                   ),

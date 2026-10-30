@@ -10,3 +10,9 @@
   verification harness.
 * Align face-attached content with the tracked head rotation in camera space,
   including Flutter Scene's local +Z-forward convention.
+* Add `ArFaceAnchorOrigin.faceCenter` so ARKit face-anchor content can use
+  the same center-relative offsets on Flutter.
+* Add optional MediaPipe face blendshapes through
+  `ArView(enableFaceBlendshapes: true)` and `ArFaceAnchor.blendshapes`.
+* Add a Flutter `StackChanArView` example with the StackChan GLB, live
+  expressions, decoration modes, expression JSON, and JPEG snapshots.

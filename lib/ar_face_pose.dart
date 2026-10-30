@@ -5,6 +5,21 @@ import 'package:flutter/widgets.dart' show Offset, Size;
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'package:vector_math/vector_math.dart' show Matrix4, Quaternion, Vector3;
 
+/// The origin used for an [ArView] face anchor.
+enum ArFaceAnchorOrigin {
+  /// The anchor is placed on the nose surface.
+  ///
+  /// This is the historical [ArView] behavior and is convenient for small
+  /// face-worn props such as glasses or a pig nose.
+  noseTip,
+
+  /// The anchor matches ARKit's face-anchor origin at the center of the face.
+  ///
+  /// Use this mode when porting ARKit face-anchor content that relies on
+  /// offsets relative to the face center.
+  faceCenter,
+}
+
 /// The face pose used to place a [ArView] scene anchor.
 ///
 /// [transform] is a metric camera-space transform. The camera is at the
@@ -27,10 +42,13 @@ class ArFacePose {
   /// Head rotation in camera space.
   final Quaternion rotation;
 
-  /// Nose-tip position in camera space, in meters.
+  /// Anchor position in camera space, in meters.
+  ///
+  /// This is the nose-tip position for [ArFaceAnchorOrigin.noseTip] and the
+  /// face-center position for [ArFaceAnchorOrigin.faceCenter].
   final Vector3 position;
 
-  /// Nose position in normalized display coordinates, top-left origin.
+  /// Anchor position in normalized display coordinates, top-left origin.
   final Offset screenPosition;
 
   /// MediaPipe head rotation estimate.
@@ -51,14 +69,19 @@ class ArFacePose {
 /// `BoxFit.cover` around the face.
 class ArFacePoseMapper {
   /// Creates a mapper for a camera with [verticalFovDegrees].
-  const ArFacePoseMapper({this.verticalFovDegrees = 63})
-    : assert(
-        verticalFovDegrees > 0 && verticalFovDegrees < 180,
-        'verticalFovDegrees must be between 0 and 180.',
-      );
+  const ArFacePoseMapper({
+    this.verticalFovDegrees = 63,
+    this.anchorOrigin = ArFaceAnchorOrigin.noseTip,
+  }) : assert(
+         verticalFovDegrees > 0 && verticalFovDegrees < 180,
+         'verticalFovDegrees must be between 0 and 180.',
+       );
 
   /// Vertical field of view of the camera preview, in degrees.
   final double verticalFovDegrees;
+
+  /// Origin used for the returned camera-space anchor.
+  final ArFaceAnchorOrigin anchorOrigin;
 
   /// Maps [mesh] to a camera-space anchor for [viewportSize].
   ///
@@ -146,7 +169,7 @@ class ArFacePoseMapper {
       distance - math.min(faceWidthMeters * 0.14, distance * 0.2),
     );
     final double halfHeightAtNose = tanHalfFov * noseDistance;
-    final Vector3 position = Vector3(
+    final Vector3 nosePosition = Vector3(
       (nose.dx - 0.5) * 2.0 * halfHeightAtNose * viewAspect,
       (0.5 - nose.dy) * 2.0 * halfHeightAtNose,
       noseDistance,
@@ -156,14 +179,36 @@ class ArFacePoseMapper {
       geometry.poseTransformMatrix,
     );
 
+    final Vector3 position;
+    final Offset anchorScreenPosition;
+    switch (anchorOrigin) {
+      case ArFaceAnchorOrigin.noseTip:
+        position = nosePosition;
+        anchorScreenPosition = Offset(
+          nose.dx.clamp(0.0, 1.0).toDouble(),
+          nose.dy.clamp(0.0, 1.0).toDouble(),
+        );
+      case ArFaceAnchorOrigin.faceCenter:
+        // The local +Z axis points out of the face toward the camera. Move
+        // from the nose surface back along that axis to ARKit's face center.
+        final Vector3 towardCamera = rotation.rotated(Vector3(0, 0, 1));
+        position = nosePosition - towardCamera * (distance - noseDistance);
+        final double halfHeightAtCenter = tanHalfFov * distance;
+        anchorScreenPosition = Offset(
+          (position.x / (2.0 * halfHeightAtCenter * viewAspect) + 0.5)
+              .clamp(0.0, 1.0)
+              .toDouble(),
+          (0.5 - position.y / (2.0 * halfHeightAtCenter))
+              .clamp(0.0, 1.0)
+              .toDouble(),
+        );
+    }
+
     return ArFacePose(
       transform: Matrix4.compose(position, rotation, Vector3(1.0, 1.0, 1.0)),
       rotation: rotation,
       position: position,
-      screenPosition: Offset(
-        nose.dx.clamp(0.0, 1.0).toDouble(),
-        nose.dy.clamp(0.0, 1.0).toDouble(),
-      ),
+      screenPosition: anchorScreenPosition,
       headPose: headPose,
       distanceMeters: distance,
       faceWidthMeters: faceWidthMeters,

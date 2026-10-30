@@ -20,7 +20,7 @@ Camera-driven face AR for Flutter, built with:
 | `preferredFramesPerSecond` | `ArView(preferredFramesPerSecond: 30)` |
 | `showsStatistics` | `ArView(showsStatistics: true)` |
 
-The view owns the camera and tracking session. The `Scene` remains application-owned. While a face is visible, `ArView` maintains one `ArFaceAnchor` and keeps its `Node` positioned at the nose in a perspective camera space aligned to the preview. The anchor also inherits MediaPipe's full head rotation, so content added to the node stays attached to the face instead of always facing the camera.
+The view owns the camera and tracking session. The `Scene` remains application-owned. While a face is visible, `ArView` maintains one `ArFaceAnchor` in a perspective camera space aligned to the preview. The anchor is placed at the nose by default; set `faceAnchorOrigin: ArFaceAnchorOrigin.faceCenter` to match ARKit's face-center coordinate system. The anchor also inherits MediaPipe's full head rotation, so content added to the node stays attached to the face instead of always facing the camera.
 
 Face-anchor content follows Flutter Scene's local axis convention: `+Z` is
 forward, `+Y` is up, and `+X` is the content's right side. A model authored to
@@ -110,8 +110,11 @@ MediaPipe pose translation, and the final camera-space anchor position.
 - `screenPosition`: normalized nose point in the displayed camera image
 - `distanceMeters` and `faceWidthMeters`
 - `mesh`, `landmarks`, and `headPose`
+- `blendshapes`, when `enableFaceBlendshapes: true` is passed to `ArView`
 
 Add a `Mesh`, glTF model, `WidgetComponent`, particles, or other scene content to the node returned by `nodeForFaceAnchor`. The anchor keeps that node attached while the face remains tracked and removes it after `anchorLostGracePeriod`.
+
+The example app includes [`StackChanArView`](example/lib/stack_chan_ar_view.dart), a Flutter port of the iOS StackChan face effect. It uses ARKit-compatible face-center offsets, the bundled GLB model, live eye/mouth expressions, JSON expression events, and optional JPEG frame snapshots.
 
 Use `ArFacePoseMapper` when you need to map a `FaceMeshResult` into the same
 metric camera space without an `ArView`, for example in an image or model
