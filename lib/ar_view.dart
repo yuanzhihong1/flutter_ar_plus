@@ -1301,10 +1301,26 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     _refreshStatistics();
   }
 
-  void _debugTraceSceneAnchor(ArFaceAnchor anchor, String stage) {
-    final WidgetComponent? widgetComponent = anchor.node
+  WidgetComponent? _findFirstWidgetComponent(Node node) {
+    final WidgetComponent? direct = node
         .getComponents<WidgetComponent>()
         .firstOrNull;
+    if (direct != null) {
+      return direct;
+    }
+    for (final Node child in node.children) {
+      final WidgetComponent? nested = _findFirstWidgetComponent(child);
+      if (nested != null) {
+        return nested;
+      }
+    }
+    return null;
+  }
+
+  void _debugTraceSceneAnchor(ArFaceAnchor anchor, String stage) {
+    final WidgetComponent? widgetComponent = _findFirstWidgetComponent(
+      anchor.node,
+    );
     final Vector3 position = anchor.transform.getTranslation();
     debugPrint(
       'ArView[$stage] node=${anchor.node.name} '

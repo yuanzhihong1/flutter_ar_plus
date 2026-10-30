@@ -1,7 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_ar/ar_view.dart';
-import 'package:flutter_ar_example/stack_chan_ar_view.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
 
@@ -22,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const CupertinoApp(
       debugShowCheckedModeBanner: false,
-      home: _runFaceImageTest ? FaceImageTestPage() : StackChanArView(),
+      home: _runFaceImageTest ? FaceImageTestPage() : ArDemoPage(),
     );
   }
 }
