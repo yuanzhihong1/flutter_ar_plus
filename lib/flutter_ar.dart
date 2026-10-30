@@ -1,3 +1,5 @@
+export 'ar_face_pose.dart';
+export 'ar_view.dart';
 
 import 'flutter_ar_platform_interface.dart';
 

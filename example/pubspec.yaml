@@ -1,5 +1,6 @@
 name: flutter_ar_example
 description: "Demonstrates how to use the flutter_ar plugin."
+version: 1.0.0+1
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,6 +17,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+
+  camera: ^0.12.2
+  flutter_scene: ^0.24.3
+  mediapipe_face_mesh: ^3.2.2
+  vector_math: ^2.4.4
 
   flutter_ar:
     # When depending on this package from a real application you should use:
@@ -53,6 +59,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/face_test.jpg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

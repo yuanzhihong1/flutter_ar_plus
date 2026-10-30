@@ -5,9 +5,10 @@
 Pod::Spec.new do |s|
   s.name             = 'flutter_ar'
   s.version          = '0.0.1'
-  s.summary          = 'A new Flutter project.'
+  s.summary          = 'Camera-driven face AR for Flutter.'
   s.description      = <<-DESC
-A new Flutter project.
+Camera-driven face AR built with camera, MediaPipe Face Mesh, Flutter Scene,
+and vector_math.
                        DESC
   s.homepage         = 'http://example.com'
   s.license          = { :file => '../LICENSE' }

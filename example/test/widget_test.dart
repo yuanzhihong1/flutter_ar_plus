@@ -1,27 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:flutter_ar_example/nose_pig_node.dart';
+import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_ar_example/main.dart';
-
 void main() {
-  testWidgets('Verify Platform version', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('creates a three-dimensional pig head attached at the nose', () {
+    final Node node = createNosePigNode(faceWidthMeters: 0.15);
 
-    // Verify that platform version is retrieved.
+    expect(node.name, 'pig-at-nose');
+    expect(node.children.length, 13);
     expect(
-      find.byWidgetPredicate(
-        (Widget widget) =>
-            widget is Text && widget.data!.startsWith('Running on:'),
+      node.children.every(
+        (Node child) => child.getComponents<MeshComponent>().length == 1,
       ),
-      findsOneWidget,
+      isTrue,
+    );
+    expect(
+      node.children.map((Node child) => child.name),
+      containsAll(<String>[
+        'pig-head',
+        'pig-snout',
+        'pig-mouth',
+        'pig-eye-left',
+        'pig-eye-right',
+        'pig-pupil-left',
+        'pig-pupil-right',
+        'pig-ear-left',
+        'pig-ear-right',
+      ]),
     );
   });
 }

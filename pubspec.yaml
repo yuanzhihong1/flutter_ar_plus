@@ -1,23 +1,22 @@
 name: flutter_ar
-description: "A new Flutter project."
+description: "Camera-driven face AR view powered by MediaPipe Face Mesh and Flutter Scene."
 version: 0.0.1
 homepage:
 
 environment:
   sdk: ^3.13.7
-  flutter: '>=3.3.0'
+  flutter: '>=3.47.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  flutter_web_plugins:
-    sdk: flutter
-  web: ^1.0.0
   plugin_platform_interface: ^2.0.2
-  mediapipe_face_mesh:
-  camera:
-  flutter_scene:
-  vector_math:
+  mediapipe_face_mesh: ^3.2.2
+  camera: ^0.12.2
+  flutter_scene: ^0.24.3
+  vector_math: ^2.4.4
+  permission_handler: ^12.0.3
+  camera_macos: ^0.1.1
 
 dev_dependencies:
   flutter_test:
@@ -46,15 +45,8 @@ flutter:
         pluginClass: FlutterArPlugin
       ios:
         pluginClass: FlutterArPlugin
-      linux:
-        pluginClass: FlutterArPlugin
       macos:
         pluginClass: FlutterArPlugin
-      windows:
-        pluginClass: FlutterArPluginCApi
-      web:
-        pluginClass: FlutterArWeb
-        fileName: flutter_ar_web.dart
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

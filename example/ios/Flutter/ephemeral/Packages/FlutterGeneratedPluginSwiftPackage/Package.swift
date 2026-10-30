@@ -19,6 +19,7 @@ let package = Package(
         .package(name: "flutter_ar", path: "../.packages/flutter_ar"),
         .package(name: "integration_test", path: "../.packages/integration_test"),
         .package(name: "mediapipe_face_mesh", path: "../.packages/mediapipe_face_mesh-3.2.2"),
+        .package(name: "permission_handler_apple", path: "../.packages/permission_handler_apple-9.6.4"),
         .package(name: "FlutterFramework", path: "../.packages/FlutterFramework")
     ],
     targets: [
@@ -29,6 +30,7 @@ let package = Package(
                 .product(name: "flutter-ar", package: "flutter_ar"),
                 .product(name: "integration-test", package: "integration_test"),
                 .product(name: "mediapipe-face-mesh", package: "mediapipe_face_mesh"),
+                .product(name: "permission-handler-apple", package: "permission_handler_apple"),
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ]
         )

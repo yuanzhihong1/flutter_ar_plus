@@ -1,56 +1,135 @@
-import 'dart:async';
-
+import 'package:camera/camera.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_ar/ar_view.dart';
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_scene/scene.dart';
 
-void main() {
+import 'face_image_test_page.dart';
+import 'nose_pig_node.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+const bool _runFaceImageTest = bool.fromEnvironment('FACE_IMAGE_TEST');
+
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return const CupertinoApp(
+      debugShowCheckedModeBanner: false,
+      home: _runFaceImageTest ? FaceImageTestPage() : ArDemoPage(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-  final _flutterArPlugin = FlutterAr();
+class ArDemoPage extends StatefulWidget {
+  const ArDemoPage({super.key});
+
+  @override
+  State<ArDemoPage> createState() => _ArDemoPageState();
+}
+
+class _ArDemoPageState extends State<ArDemoPage> {
+  late final Scene _scene;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    _scene = Scene();
   }
 
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await _flutterArPlugin.getPlatformVersion() ??
-          'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
+  @override
+  void dispose() {
+    _scene.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp(home: CupertinoPageScaffold(child: ArView()));
+    return CupertinoPageScaffold(
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          ArView(
+            scene: _scene,
+            delegate: const NosePigDelegate(),
+            preferredFramesPerSecond: 30,
+            cameraResolution: ResolutionPreset.medium,
+            showsStatistics: true,
+          ),
+          const IgnorePointer(
+            child: SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: _DemoBadge(),
+                ),
+              ),
+            ),
+          ),
+          const IgnorePointer(
+            child: SafeArea(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(24, 0, 24, 28),
+                  child: Text(
+                    '把脸放入画面 · 🐷 会贴在鼻尖并跟随头部',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFFFFFFFF),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      shadows: <Shadow>[
+                        Shadow(color: Color(0xCC000000), blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoBadge extends StatelessWidget {
+  const _DemoBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xB3000000),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text(
+          '🐷  Nose AR',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Places a widget-rendered pig emoji at the tracked nose anchor.
+class NosePigDelegate extends ArViewDelegate {
+  const NosePigDelegate();
+
+  @override
+  Node? nodeForFaceAnchor(ArView view, ArFaceAnchor anchor) {
+    return createNosePigNode(faceWidthMeters: anchor.faceWidthMeters);
   }
 }
