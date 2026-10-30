@@ -3,11 +3,10 @@ import 'dart:ui' show Size;
 
 import 'package:flutter/services.dart' show DeviceOrientation;
 
-/// Returns the aspect-correct size consumed by [CameraPreview].
+/// 返回 [CameraPreview] 所需的、保持宽高比的外层尺寸。
 ///
-/// Camera backends report the sensor dimensions in landscape. `CameraPreview`
-/// rotates the texture for portrait device orientations, so its outer box must
-/// use the same orientation instead of forcing the raw sensor dimensions.
+/// 相机后端始终以横向报告传感器尺寸。`CameraPreview` 会在竖屏设备方向下
+/// 旋转纹理，因此外层容器必须使用相同方向，而不能直接采用原始传感器尺寸。
 Size arCameraPreviewLayoutSize(
   Size previewSize,
   DeviceOrientation orientation,

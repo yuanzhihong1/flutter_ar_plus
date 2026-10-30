@@ -1,14 +1,12 @@
-gradle-wrapper.jar
+# Gradle 包装器文件有意提交，以保证构建可复现。
 /.gradle
 /captures/
-/gradlew
-/gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/
 
-# Remember to never publicly share your keystore.
-# See https://flutter.dev/to/reference-keystore
+# 切勿公开分享签名密钥库。
+# 参见 https://flutter.dev/to/reference-keystore
 key.properties
 **/*.keystore
 **/*.jks

@@ -5,7 +5,7 @@ import 'package:flutter_ar/src/ar_view_layout.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('keeps landscape camera dimensions for landscape orientations', () {
+  test('横屏方向保留相机的横向尺寸', () {
     expect(
       arCameraPreviewLayoutSize(
         const Size(1280, 720),
@@ -22,7 +22,7 @@ void main() {
     );
   });
 
-  test('rotates sensor dimensions for portrait orientations', () {
+  test('竖屏方向旋转传感器尺寸', () {
     expect(
       arCameraPreviewLayoutSize(
         const Size(1280, 720),
@@ -39,7 +39,7 @@ void main() {
     );
   });
 
-  test('preserves empty dimensions', () {
+  test('保留空尺寸', () {
     expect(
       arCameraPreviewLayoutSize(Size.zero, DeviceOrientation.portraitUp),
       Size.zero,

@@ -1,11 +1,11 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_ar/src/flutter_ar_method_channel.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_ar/flutter_ar_method_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelFlutterAr platform = MethodChannelFlutterAr();
+  final MethodChannelFlutterAr platform = MethodChannelFlutterAr();
   const MethodChannel channel = MethodChannel('flutter_ar');
 
   setUp(() {
@@ -20,7 +20,7 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('getPlatformVersion', () async {
+  test('获取平台版本', () async {
     expect(await platform.getPlatformVersion(), '42');
   });
 }

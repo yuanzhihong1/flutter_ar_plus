@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    // Flutter Gradle 插件必须在 Android 与 Kotlin Gradle 插件之后应用。
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -15,24 +15,23 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        // TODO：请替换为自己唯一的 Application ID。
         applicationId = "com.yuanzhihong.flutter_ar_example"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // 可根据应用需求调整以下配置。
+        // 详情参阅：https://flutter.dev/to/review-gradle-config。
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
-        // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
-        // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
-        // You can force using the value of versionCode by specifying the `-P force-version-code-ignoring-abi=true`
-        // flag during build.
+        // 使用 pubspec.yaml 中的版本号。构建拆分 APK 时，Flutter 会自动加上
+        // 1000 * ABI_VERSION。
+        // 可通过 `-P force-version-code-ignoring-abi=true` 在构建时强制使用原始 versionCode。
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // TODO：发布构建请配置自己的签名信息。
+            // 当前使用调试密钥签名，以便 `flutter run --release` 可以直接运行。
             signingConfig = signingConfigs.getByName("debug")
         }
     }

@@ -7,11 +7,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /*
- * This demonstrates a simple unit test of the Kotlin portion of this plugin's implementation.
+ * 本文件演示插件 Kotlin 实现的简单单元测试。
  *
- * Once you have built the plugin's example app, you can run these tests from the command
- * line by running `./gradlew testDebugUnitTest` in the `example/android/` directory, or
- * you can run them directly from IDEs that support JUnit such as Android Studio.
+ * 构建示例应用后，可以在 `example/android/` 目录运行 `./gradlew testDebugUnitTest`，
+ * 也可以直接在支持 JUnit 的 IDE（例如 Android Studio）中运行。
  */
 
 internal class FlutterArPluginTest {

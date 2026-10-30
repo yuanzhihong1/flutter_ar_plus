@@ -1,5 +1,5 @@
 // swift-tools-version: 5.9
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version 声明构建此包所需的最低 Swift 版本。
 
 import PackageDescription
 
@@ -21,14 +21,10 @@ let package = Package(
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],
             resources: [
-                // If your plugin requires a privacy manifest, for example if it collects user
-                // data, update the PrivacyInfo.xcprivacy file to describe your plugin's
-                // privacy impact, and then uncomment these lines. For more information, see
-                // https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
-                // .process("PrivacyInfo.xcprivacy"),
+                // 插件已经包含隐私清单，发布时会随资源包一起处理。
+                .process("PrivacyInfo.xcprivacy"),
 
-                // If you have other resources that need to be bundled with your plugin, refer to
-                // the following instructions to add them:
+                // 如需将其他资源打包进插件，请参阅以下文档：
                 // https://developer.apple.com/documentation/xcode/bundling-resources-with-a-swift-package
             ]
         )

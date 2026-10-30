@@ -6,14 +6,14 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-/** FlutterArPlugin */
+/** flutter_ar 插件入口。 */
 class FlutterArPlugin :
     FlutterPlugin,
     MethodCallHandler {
-    // The MethodChannel that will the communication between Flutter and native Android
+    // 用于 Flutter 与 Android 原生层通信的方法通道。
     //
-    // This local reference serves to register the plugin with the Flutter Engine and unregister it
-    // when the Flutter Engine is detached from the Activity
+    // 该引用负责在插件附着到 Flutter Engine 时注册通道，
+    // 并在插件从 Activity 分离时注销通道。
     private var channel: MethodChannel? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {

@@ -1,0 +1,36 @@
+name: 功能建议
+description: 为 flutter_ar 提出新能力或 API 建议
+title: "[建议] "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 使用场景
+      description: 请说明当前遇到的实际问题。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+      description: 描述期望的行为、API 或交互方式。
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 替代方案
+      description: 当前是否有可行替代方案？为什么不够合适？
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 兼容性影响
+      description: 是否涉及破坏性 API 变更、平台差异或额外依赖？
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 参与意愿
+      options:
+        - label: 我愿意提交实现或协助测试。

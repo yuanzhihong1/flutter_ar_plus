@@ -1,35 +1,35 @@
-import 'package:flutter_ar/ar_view.dart';
+import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('camera permission errors can open app settings', () {
+  test('相机权限错误可以打开应用设置', () {
     for (final ArViewErrorCode code in <ArViewErrorCode>[
       ArViewErrorCode.cameraPermissionDenied,
       ArViewErrorCode.cameraPermissionPermanentlyDenied,
       ArViewErrorCode.cameraPermissionRestricted,
     ]) {
-      expect(ArViewException(code, 'denied').canOpenSettings, isTrue);
+      expect(ArViewException(code, '已拒绝').canOpenSettings, isTrue);
     }
   });
 
-  test('non-permission errors do not offer app settings', () {
+  test('非权限错误不提供应用设置入口', () {
     for (final ArViewErrorCode code in ArViewErrorCode.values) {
       if (code == ArViewErrorCode.cameraPermissionDenied ||
           code == ArViewErrorCode.cameraPermissionPermanentlyDenied ||
           code == ArViewErrorCode.cameraPermissionRestricted) {
         continue;
       }
-      expect(ArViewException(code, 'failed').canOpenSettings, isFalse);
+      expect(ArViewException(code, '失败').canOpenSettings, isFalse);
     }
   });
 
-  test('exception includes its machine-readable code in toString', () {
+  test('异常文本包含可供程序判断的错误码', () {
     const ArViewException error = ArViewException(
       ArViewErrorCode.cameraUnavailable,
-      'No camera',
+      '没有相机',
     );
 
     expect(error.toString(), contains('cameraUnavailable'));
-    expect(error.toString(), contains('No camera'));
+    expect(error.toString(), contains('没有相机'));
   });
 }

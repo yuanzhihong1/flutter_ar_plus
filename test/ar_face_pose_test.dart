@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show Size;
 
-import 'package:flutter_ar/ar_face_pose.dart';
+import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'package:vector_math/vector_math.dart';
@@ -9,7 +9,7 @@ import 'package:vector_math/vector_math.dart';
 void main() {
   const ArFacePoseMapper mapper = ArFacePoseMapper();
 
-  test('frontal face points Flutter Scene content toward the camera', () {
+  test('正面人脸使 Flutter Scene 内容朝向相机', () {
     final Quaternion rotation = mapper.contentRotationFromPoseTransform(
       _rowMajorYaw(0),
     );
@@ -20,7 +20,7 @@ void main() {
     expect(forward.z, closeTo(-1, 1e-6));
   });
 
-  test('face yaw turns content in the same direction as the head', () {
+  test('人脸偏航时内容与头部同向转动', () {
     const double yawDegrees = 46;
     final Quaternion rotation = mapper.contentRotationFromPoseTransform(
       _rowMajorYaw(yawDegrees * math.pi / 180),
@@ -33,7 +33,7 @@ void main() {
     expect(forward.z, closeTo(-math.cos(yaw), 1e-6));
   });
 
-  test('face pitch turns content up and down with the head', () {
+  test('人脸俯仰时内容随头部上下转动', () {
     const double pitchRadians = 30 * math.pi / 180;
     final Quaternion lookingUp = mapper.contentRotationFromPoseTransform(
       _rowMajorPitch(-pitchRadians),
@@ -46,7 +46,7 @@ void main() {
     expect(_forwardFor(lookingDown).y, closeTo(-math.sin(pitchRadians), 1e-6));
   });
 
-  test('returns null for an unusable viewport or image', () {
+  test('视口或图像不可用时返回 null', () {
     final FaceMeshResult mesh = _mesh(
       landmarkCount: 454,
       width: 640,
@@ -64,7 +64,7 @@ void main() {
     expect(mapper.map(mesh, viewportSize: const Size(390, 844)), isNull);
   });
 
-  test('falls back to identity for malformed pose transforms', () {
+  test('姿态矩阵格式错误时回退到单位旋转', () {
     for (final List<double> matrix in <List<double>>[
       List<double>.filled(15, 0),
       List<double>.filled(16, 0),

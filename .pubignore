@@ -1,0 +1,9 @@
+# 发布包不包含本地生成目录与可由 Flutter 工具重新生成的示例文件。
+doc/api/
+example/.dart_tool/
+example/.flutter-plugins-dependencies
+example/build/
+example/ios/Flutter/ephemeral/
+example/macos/Flutter/ephemeral/
+example/android/.gradle/
+example/android/local.properties

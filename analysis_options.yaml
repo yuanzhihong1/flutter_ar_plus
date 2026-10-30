@@ -1,14 +1,23 @@
+# 以 Flutter 官方推荐规则为基础，并启用更严格的类型检查与公开 API 文档约束。
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
   exclude:
     - build/**
+    - example/build/**
     - android/**
     - ios/**
-    - web/**
-    - windows/**
     - macos/**
-    - linux/**
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    deprecated_member_use_from_same_package: warning
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+linter:
+  rules:
+    directives_ordering: true
+    prefer_single_quotes: true
+    public_member_api_docs: true
+    sort_constructors_first: true

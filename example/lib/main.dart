@@ -1,6 +1,5 @@
-import 'package:camera/camera.dart';
 import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:flutter_ar/ar_view.dart';
+import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
 
@@ -35,7 +34,7 @@ class ArDemoPage extends StatefulWidget {
 
 class _ArDemoPageState extends State<ArDemoPage> {
   late final Scene _scene;
-  late final ARViewController _arController;
+  late final ArViewController _arController;
   Node? _selectedModel;
   int _nextModelNumber = 1;
 
@@ -43,7 +42,7 @@ class _ArDemoPageState extends State<ArDemoPage> {
   void initState() {
     super.initState();
     _scene = Scene();
-    _arController = ARViewController(scene: _scene);
+    _arController = ArViewController(scene: _scene);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _addModel();
@@ -102,12 +101,10 @@ class _ArDemoPageState extends State<ArDemoPage> {
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          ARView(
+          ArView(
             scene: _scene,
             controller: _arController,
             delegate: const NosePigDelegate(),
-            preferredFramesPerSecond: 30,
-            cameraResolution: ResolutionPreset.medium,
             showsStatistics: true,
           ),
           const IgnorePointer(
@@ -154,7 +151,7 @@ class _DemoBadge extends StatelessWidget {
       child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Text(
-          '🐷  Nose AR',
+          '🐷  鼻尖 AR',
           style: TextStyle(
             color: Color(0xFFFFFFFF),
             fontSize: 16,
@@ -303,12 +300,14 @@ class _ControlButton extends StatelessWidget {
   }
 }
 
-/// Places a widget-rendered pig emoji at the tracked nose anchor.
+/// 从 ARKit 脸部中心锚点偏移并放置鼻尖小猪。
 class NosePigDelegate extends ArViewDelegate {
   const NosePigDelegate();
 
   @override
   Node? nodeForFaceAnchor(ArView view, ArFaceAnchor anchor) {
-    return createNosePigNode(faceWidthMeters: anchor.faceWidthMeters);
+    return createNosePigNodeAtFaceCenter(
+      faceWidthMeters: anchor.faceWidthMeters,
+    );
   }
 }

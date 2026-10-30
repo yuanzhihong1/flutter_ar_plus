@@ -1,5 +1,6 @@
-# Launch Screen Assets
+# 启动图片
 
-You can customize the launch screen with your own desired assets by replacing the image files in this directory.
+可以将此目录中的图片替换为自己的启动资源，来自定义应用启动界面。
 
-You can also do it by opening your Flutter project's Xcode project with `open ios/Runner.xcworkspace`, selecting `Runner/Assets.xcassets` in the Project Navigator and dropping in the desired images.
+也可以打开 Flutter 项目的 Xcode 工程，在项目导航器中选择
+`Runner/Assets.xcassets`，然后拖入所需的图片资源。

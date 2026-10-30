@@ -2,14 +2,14 @@ import Flutter
 import UIKit
 import XCTest
 
-// If your plugin has been explicitly set to "type: .dynamic" in the Package.swift,
-// you will need to add your plugin as a dependency of RunnerTests within Xcode.
+// 如果插件在 Package.swift 中显式设置为 "type: .dynamic"，
+// 则需要在 Xcode 中将插件添加为 RunnerTests 的依赖。
 
 @testable import flutter_ar
 
-// This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
+// 本文件演示插件 Swift 实现的简单单元测试。
 //
-// See https://developer.apple.com/documentation/xctest for more information about using XCTest.
+// XCTest 用法请参阅 https://developer.apple.com/documentation/xctest。
 
 class RunnerTests: XCTestCase {
 
@@ -18,7 +18,7 @@ class RunnerTests: XCTestCase {
 
     let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
 
-    let resultExpectation = expectation(description: "result block must be called.")
+    let resultExpectation = expectation(description: "必须调用结果回调。")
     plugin.handle(call) { result in
       XCTAssertEqual(result as! String, "iOS " + UIDevice.current.systemVersion)
       resultExpectation.fulfill()
@@ -30,7 +30,7 @@ class RunnerTests: XCTestCase {
     let plugin = FlutterArPlugin()
     let call = FlutterMethodCall(methodName: "unknownMethod", arguments: [])
 
-    let resultExpectation = expectation(description: "result block must be called.")
+    let resultExpectation = expectation(description: "必须调用结果回调。")
     plugin.handle(call) { result in
       XCTAssertTrue(result as AnyObject === FlutterMethodNotImplemented)
       resultExpectation.fulfill()

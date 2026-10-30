@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:mediapipe_face_mesh/face_mesh_painter.dart';
@@ -11,10 +11,10 @@ import 'package:vector_math/vector_math.dart' show Vector3;
 
 import 'nose_pig_node.dart';
 
-/// Runs MediaPipe Face Mesh against a bundled still image.
+/// 使用内置静态图片运行 MediaPipe Face Mesh。
 ///
-/// Launch the example with `--dart-define=FACE_IMAGE_TEST=true` to isolate
-/// tracking correctness from the live camera.
+/// 使用 `--dart-define=FACE_IMAGE_TEST=true` 启动示例，可在不依赖实时相机
+/// 的情况下单独验证追踪结果。
 class FaceImageTestPage extends StatefulWidget {
   const FaceImageTestPage({super.key});
 
@@ -32,7 +32,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
   FaceMeshInferenceResult? _inference;
   ArFacePose? _pose;
   Node? _pigNode;
-  String _status = 'Waiting to run';
+  String _status = '等待运行';
   bool _running = false;
 
   @override
@@ -54,7 +54,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
     if (_running) return;
     setState(() {
       _running = true;
-      _status = 'Loading image and MediaPipe models…';
+      _status = '正在加载图片与 MediaPipe 模型…';
       _inference = null;
     });
 
@@ -75,7 +75,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
         format: ui.ImageByteFormat.rawRgba,
       );
       if (rgba == null) {
-        throw StateError('Could not decode image pixels.');
+        throw StateError('无法解码图片像素。');
       }
 
       detector = await FaceDetectorProcessor.create(
@@ -108,7 +108,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
 
       final FaceMeshResult? mesh = inference.meshResult;
       if (mesh == null || mesh.landmarks.isEmpty) {
-        throw StateError('MediaPipe did not detect a face in $_asset.');
+        throw StateError('MediaPipe 未在 $_asset 中检测到人脸。');
       }
       final FaceMeshGeometry geometry = mesh.estimateGeometry(
         verticalFovDegrees: 63.0,
@@ -120,9 +120,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
         viewportSize: Size(1000, 1000 / imageAspect),
       );
       if (pose == null) {
-        throw StateError(
-          'Could not map the detected face into AR camera space.',
-        );
+        throw StateError('无法将检测到的人脸映射到 AR 相机空间。');
       }
 
       _logResult(
@@ -139,9 +137,12 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
       if (oldPig != null) {
         _scene.remove(oldPig);
       }
-      final Node pig = createNosePigNode(faceWidthMeters: pose.faceWidthMeters)
+      final Node faceAnchor = Node(name: 'face-anchor')
         ..localTransform = pose.transform;
-      _scene.add(pig);
+      faceAnchor.add(
+        createNosePigNodeAtFaceCenter(faceWidthMeters: pose.faceWidthMeters),
+      );
+      _scene.add(faceAnchor);
       setState(() {
         _imageSize = Size(
           mesh.imageWidth.toDouble(),
@@ -149,19 +150,19 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
         );
         _inference = inference;
         _pose = pose;
-        _pigNode = pig;
+        _pigNode = faceAnchor;
         _status =
-            'OK · ${mesh.landmarks.length} landmarks · '
-            'mesh ${geometry.metricLandmarks.length} points · '
-            'face width ${measurements.faceWidth.valueCm.toStringAsFixed(1)} cm · '
-            'anchor ${pose.position.z.toStringAsFixed(2)} m · '
-            '${stopwatch.elapsedMilliseconds} ms';
+            '完成 · ${mesh.landmarks.length} 个关键点 · '
+            '网格 ${geometry.metricLandmarks.length} 个点 · '
+            '脸宽 ${measurements.faceWidth.valueCm.toStringAsFixed(1)} 厘米 · '
+            '锚点 ${pose.position.z.toStringAsFixed(2)} 米 · '
+            '${stopwatch.elapsedMilliseconds} 毫秒';
       });
     } catch (error, stackTrace) {
       debugPrint('[FACE_IMAGE_TEST] FAILED: $error\n$stackTrace');
       if (mounted) {
         setState(() {
-          _status = 'FAILED · $error';
+          _status = '失败 · $error';
         });
       }
     } finally {
@@ -229,7 +230,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
                 children: <Widget>[
                   const Expanded(
                     child: Text(
-                      'MediaPipe Face Mesh · image test',
+                      'MediaPipe Face Mesh · 静态图片测试',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -239,7 +240,7 @@ class _FaceImageTestPageState extends State<FaceImageTestPage> {
                   CupertinoButton(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     onPressed: _running ? null : _runTest,
-                    child: const Text('Run'),
+                    child: const Text('运行'),
                   ),
                 ],
               ),

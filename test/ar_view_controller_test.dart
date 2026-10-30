@@ -1,4 +1,5 @@
-import 'package:flutter_ar/ar_view.dart';
+import 'package:camera/camera.dart';
+import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vector_math/vector_math.dart';
@@ -7,23 +8,33 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final String? sceneSkipReason = _sceneSkipReason();
   late Scene scene;
-  late ARViewController controller;
+  late ArViewController controller;
 
   setUp(() {
     scene = Scene();
-    controller = ARViewController(scene: scene);
+    controller = ArViewController(scene: scene);
   });
 
   tearDown(() {
     scene.dispose();
   });
 
-  test('ARView is the canonical constructor alias', () {
-    final ARView view = ARView(scene: scene);
+  test('ArView 使用与 ARKit 一致的默认参数', () {
+    final ArView view = ArView(scene: scene);
     expect(view.scene, same(scene));
+    expect(view.faceAnchorOrigin, ArFaceAnchorOrigin.faceCenter);
+    expect(view.preferredFramesPerSecond, 60);
+    expect(view.cameraResolution, ResolutionPreset.high);
+    expect(view.enableFaceBlendshapes, isTrue);
   }, skip: sceneSkipReason);
 
-  test('adds a node with a camera-space transform', () {
+  test('未挂载时状态查询返回安全值', () {
+    expect(controller.isAttached, isFalse);
+    expect(controller.isTracking, isFalse);
+    expect(controller.currentFaceAnchor, isNull);
+  }, skip: sceneSkipReason);
+
+  test('使用相机空间变换添加节点', () {
     final Node node = Node(name: 'chair');
 
     expect(
@@ -86,7 +97,7 @@ void main() {
     expect(node.parent, same(otherScene.root));
   }, skip: sceneSkipReason);
 
-  test('generates a name for anonymous nodes and trims explicit names', () {
+  test('为匿名节点生成名称并清理显式名称', () {
     final Node anonymous = controller.addNode(Node());
     final Node named = controller.addNode(Node(), name: '  camera-prop  ');
 
@@ -101,6 +112,6 @@ String? _sceneSkipReason() {
     probe.dispose();
     return null;
   } catch (_) {
-    return 'Flutter Scene requires Flutter GPU. Run ./tool/test.sh.';
+    return 'Flutter Scene 需要 Flutter GPU，请运行 ./tool/test.sh。';
   }
 }

@@ -2,12 +2,11 @@ import 'package:flutter/widgets.dart' show Color;
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Quaternion, Vector3, Vector4;
 
-/// Builds a small procedural 3D pig head worn on the tracked nose.
+/// 构建一个佩戴在追踪鼻尖上的小型程序化 3D 猪头。
 ///
-/// The node is authored with its snout along local +Z, following Flutter
-/// Scene's forward-axis convention. [ArFaceAnchor] converts the MediaPipe face
-/// pose into that convention, so the ears, eyes, snout, and mouth turn with the
-/// person instead of billboarding toward the camera.
+/// 节点沿局部 +Z 方向构建鼻口，遵循 Flutter Scene 的前向轴约定。
+/// [ArFaceAnchor] 会将 MediaPipe 人脸姿态转换到该坐标系，因此耳朵、眼睛、
+/// 鼻口和嘴巴都会随人物一起转动，而不是始终朝向相机。
 Node createNosePigNode({required double faceWidthMeters}) {
   final double width = (faceWidthMeters * 0.54).clamp(0.058, 0.105);
   final double height = width * 0.9;
@@ -24,8 +23,7 @@ Node createNosePigNode({required double faceWidthMeters}) {
     Vector3(width * 0.34, width * 0.055, width * 0.03),
   );
 
-  // Rounded pink head. PBR shading makes the silhouette and surface normal
-  // visible as the head turns.
+  // 圆润的粉色头部。PBR 着色能让轮廓和表面法线在头部转动时清晰可见。
   root.add(
     _meshNode(
       name: 'pig-head',
@@ -36,7 +34,7 @@ Node createNosePigNode({required double faceWidthMeters}) {
     ),
   );
 
-  // The protruding snout is the clearest depth cue when the user turns.
+  // 突出的鼻口是用户转动头部时最清晰的深度提示。
   final double snoutZ = depth * 0.48 + width * 0.17;
   root.add(
     _meshNode(
@@ -49,7 +47,7 @@ Node createNosePigNode({required double faceWidthMeters}) {
     ),
   );
 
-  // Mouth sits below the snout and remains visible from a three-quarter view.
+  // 嘴巴位于鼻口下方，从四分之三侧面观察时仍然可见。
   root.add(
     _meshNode(
       name: 'pig-mouth',
@@ -60,8 +58,8 @@ Node createNosePigNode({required double faceWidthMeters}) {
   );
 
   for (final double side in <double>[-1, 1]) {
-    // White eyeball plus a forward pupil. Both are outside the head surface so
-    // they remain legible instead of being swallowed by the sphere.
+    // 白色眼球与前方的瞳孔都位于头部表面之外，
+    // 避免被球体吞没并保持清晰可辨。
     root.add(
       _meshNode(
         name: side < 0 ? 'pig-eye-left' : 'pig-eye-right',
@@ -138,5 +136,12 @@ Node _meshNode({
   if (scale != null) {
     node.scale = scale;
   }
+  return node;
+}
+
+/// 创建从 ARKit 脸部中心锚点偏移到鼻尖的猪头节点。
+Node createNosePigNodeAtFaceCenter({required double faceWidthMeters}) {
+  final Node node = createNosePigNode(faceWidthMeters: faceWidthMeters);
+  node.position = Vector3(0, -faceWidthMeters * 0.16, faceWidthMeters * 0.5);
   return node;
 }
