@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:vector_math/vector_math.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final String? sceneSkipReason = _sceneSkipReason();
   late Scene scene;
   late ARViewController controller;
 
@@ -19,7 +21,7 @@ void main() {
   test('ARView is the canonical constructor alias', () {
     final ARView view = ARView(scene: scene);
     expect(view.scene, same(scene));
-  });
+  }, skip: sceneSkipReason);
 
   test('adds a node with a camera-space transform', () {
     final Node node = Node(name: 'chair');
@@ -39,7 +41,7 @@ void main() {
     expect(node.position.y, closeTo(0.1, 1e-6));
     expect(node.position.z, closeTo(1.4, 1e-6));
     expect(node.scale.x, closeTo(0.75, 1e-6));
-  });
+  }, skip: sceneSkipReason);
 
   test('moves, locates, and removes a node', () {
     final Node node = controller.addNode(
@@ -62,7 +64,7 @@ void main() {
     controller.removeNode(node);
     expect(node.parent, isNull);
     expect(controller.nodeNamed('lamp'), isNull);
-  });
+  }, skip: sceneSkipReason);
 
   test('does not add a node to the scene twice', () {
     final Node node = controller.addNode(Node(name: 'once'));
@@ -72,5 +74,33 @@ void main() {
 
     expect(scene.root.children.length, childCount);
     expect(node.position.z, closeTo(1.5, 1e-6));
-  });
+  }, skip: sceneSkipReason);
+
+  test('rejects a node owned by another scene', () {
+    final Scene otherScene = Scene();
+    addTearDown(otherScene.dispose);
+    final Node node = Node(name: 'foreign');
+    otherScene.add(node);
+
+    expect(() => controller.addNode(node), throwsArgumentError);
+    expect(node.parent, same(otherScene.root));
+  }, skip: sceneSkipReason);
+
+  test('generates a name for anonymous nodes and trims explicit names', () {
+    final Node anonymous = controller.addNode(Node());
+    final Node named = controller.addNode(Node(), name: '  camera-prop  ');
+
+    expect(anonymous.name, 'ar_node_1');
+    expect(named.name, 'camera-prop');
+  }, skip: sceneSkipReason);
+}
+
+String? _sceneSkipReason() {
+  try {
+    final Scene probe = Scene();
+    probe.dispose();
+    return null;
+  } catch (_) {
+    return 'Flutter Scene requires Flutter GPU. Run ./tool/test.sh.';
+  }
 }

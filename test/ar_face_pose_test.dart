@@ -1,7 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui' show Size;
 
 import 'package:flutter_ar/ar_face_pose.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'package:vector_math/vector_math.dart';
 
 void main() {
@@ -43,6 +45,61 @@ void main() {
     expect(_forwardFor(lookingUp).y, closeTo(math.sin(pitchRadians), 1e-6));
     expect(_forwardFor(lookingDown).y, closeTo(-math.sin(pitchRadians), 1e-6));
   });
+
+  test('returns null for an unusable viewport or image', () {
+    final FaceMeshResult mesh = _mesh(
+      landmarkCount: 454,
+      width: 640,
+      height: 480,
+    );
+
+    expect(mapper.map(mesh, viewportSize: Size.zero), isNull);
+    expect(
+      mapper.map(
+        _mesh(landmarkCount: 454, width: 0, height: 480),
+        viewportSize: const Size(390, 844),
+      ),
+      isNull,
+    );
+    expect(mapper.map(mesh, viewportSize: const Size(390, 844)), isNull);
+  });
+
+  test('falls back to identity for malformed pose transforms', () {
+    for (final List<double> matrix in <List<double>>[
+      List<double>.filled(15, 0),
+      List<double>.filled(16, 0),
+    ]) {
+      final Quaternion rotation = mapper.contentRotationFromPoseTransform(
+        matrix,
+      );
+      expect(rotation.x, closeTo(0, 1e-6));
+      expect(rotation.y, closeTo(0, 1e-6));
+      expect(rotation.z, closeTo(0, 1e-6));
+      expect(rotation.w, closeTo(1, 1e-6));
+    }
+  });
+}
+
+FaceMeshResult _mesh({
+  required int landmarkCount,
+  required int width,
+  required int height,
+}) {
+  return FaceMeshResult(
+    landmarks: List<FaceMeshLandmark>.generate(
+      landmarkCount,
+      (int index) => FaceMeshLandmark(x: 0.5, y: 0.5, z: 0),
+    ),
+    rect: const NormalizedRect(
+      xCenter: 0.5,
+      yCenter: 0.5,
+      width: 0.5,
+      height: 0.5,
+    ),
+    score: 1,
+    imageWidth: width,
+    imageHeight: height,
+  );
 }
 
 List<double> _rowMajorYaw(double radians) {

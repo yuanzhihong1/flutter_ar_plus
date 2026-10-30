@@ -63,7 +63,6 @@ flutter:
 
   assets:
     - assets/face_test.jpg
-    - assets/stack_chan_model.glb
 
   # To add assets to your application, add an assets section, like this:
   # assets:

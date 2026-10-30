@@ -14,5 +14,7 @@
   the same center-relative offsets on Flutter.
 * Add optional MediaPipe face blendshapes through
   `ArView(enableFaceBlendshapes: true)` and `ArFaceAnchor.blendshapes`.
-* Add a Flutter `StackChanArView` example with the StackChan GLB, live
-  expressions, decoration modes, expression JSON, and JPEG snapshots.
+* Add a test script that enables Flutter GPU for scene-graph unit tests.
+* Package the iOS privacy manifest with the plugin.
+* Fix portrait camera preview stretching on iOS by matching `CameraPreview`'s
+  device-orientation-aware aspect ratio.

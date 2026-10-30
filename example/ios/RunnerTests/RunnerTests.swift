@@ -26,4 +26,16 @@ class RunnerTests: XCTestCase {
     waitForExpectations(timeout: 1)
   }
 
+  func testUnknownMethodIsNotImplemented() {
+    let plugin = FlutterArPlugin()
+    let call = FlutterMethodCall(methodName: "unknownMethod", arguments: [])
+
+    let resultExpectation = expectation(description: "result block must be called.")
+    plugin.handle(call) { result in
+      XCTAssertTrue(result as AnyObject === FlutterMethodNotImplemented)
+      resultExpectation.fulfill()
+    }
+    waitForExpectations(timeout: 1)
+  }
+
 }

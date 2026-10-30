@@ -2,8 +2,9 @@ package com.yuanzhihong.flutter_ar
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import org.mockito.Mockito
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /*
  * This demonstrates a simple unit test of the Kotlin portion of this plugin's implementation.
@@ -19,9 +20,39 @@ internal class FlutterArPluginTest {
         val plugin = FlutterArPlugin()
 
         val call = MethodCall("getPlatformVersion", null)
-        val mockResult: MethodChannel.Result = Mockito.mock(MethodChannel.Result::class.java)
-        plugin.onMethodCall(call, mockResult)
+        val result = RecordingResult()
+        plugin.onMethodCall(call, result)
 
-        Mockito.verify(mockResult).success("Android " + android.os.Build.VERSION.RELEASE)
+        assertEquals("Android " + android.os.Build.VERSION.RELEASE, result.successValue)
+    }
+
+    @Test
+    fun onMethodCall_unknownMethod_reportsNotImplemented() {
+        val plugin = FlutterArPlugin()
+
+        val call = MethodCall("unknownMethod", null)
+        val result = RecordingResult()
+        plugin.onMethodCall(call, result)
+
+        assertTrue(result.notImplementedCalled)
+    }
+
+    private class RecordingResult : MethodChannel.Result {
+        var successValue: Any? = null
+        var notImplementedCalled = false
+
+        override fun success(result: Any?) {
+            successValue = result
+        }
+
+        override fun error(
+            errorCode: String,
+            errorMessage: String?,
+            errorDetails: Any?
+        ) = Unit
+
+        override fun notImplemented() {
+            notImplementedCalled = true
+        }
     }
 }

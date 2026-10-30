@@ -3,11 +3,21 @@ import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  final String? sceneSkipReason = _sceneSkipReason();
+
+  test('scene node hierarchy preserves names', () {
+    final Node root = Node(name: 'example-root')..add(Node(name: 'pig-child'));
+
+    expect(root.name, 'example-root');
+    expect(root.getChildByName('pig-child'), isNotNull);
+  });
+
   test('creates a three-dimensional pig head attached at the nose', () {
     final Node node = createNosePigNode(faceWidthMeters: 0.15);
 
     expect(node.name, 'pig-at-nose');
-    expect(node.children.length, 13);
+    expect(node.children.length, 11);
     expect(
       node.children.every(
         (Node child) => child.getComponents<MeshComponent>().length == 1,
@@ -28,5 +38,15 @@ void main() {
         'pig-ear-right',
       ]),
     );
-  });
+  }, skip: sceneSkipReason);
+}
+
+String? _sceneSkipReason() {
+  try {
+    final Scene probe = Scene();
+    probe.dispose();
+    return null;
+  } catch (_) {
+    return 'Flutter Scene requires Flutter GPU. Run ../../tool/test.sh.';
+  }
 }

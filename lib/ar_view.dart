@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:vector_math/vector_math.dart' show Matrix4, Quaternion, Vector3;
 
 import 'ar_face_pose.dart';
+import 'src/ar_view_layout.dart';
 
 /// Builds the content shown while the camera or face pipeline is starting.
 typedef ArViewLoadingBuilder = Widget Function(
@@ -1650,11 +1651,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
               if (widget.showCameraPreview &&
                   controller != null &&
                   controller.value.isInitialized)
-                _CameraPreviewLayer(
-                  controller: controller,
-                  rotationDegrees:
-                      _rotationDegrees(controller, _cameraDescription!) ?? 0,
-                ),
+                _CameraPreviewLayer(controller: controller),
               if (widget.showCameraPreview && _isMacOS && _macOSCameraRequested)
                 _buildMacOSCameraPreview(context),
               Positioned.fill(
@@ -1805,34 +1802,35 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
 }
 
 class _CameraPreviewLayer extends StatelessWidget {
-  const _CameraPreviewLayer({
-    required this.controller,
-    required this.rotationDegrees,
-  });
+  const _CameraPreviewLayer({required this.controller});
 
   final CameraController controller;
-  final int rotationDegrees;
 
   @override
   Widget build(BuildContext context) {
-    final Size? previewSize = controller.value.previewSize;
-    if (previewSize == null) {
-      return const SizedBox.shrink();
-    }
-    final bool swaps = rotationDegrees == 90 || rotationDegrees == 270;
-    final double width = swaps ? previewSize.height : previewSize.width;
-    final double height = swaps ? previewSize.width : previewSize.height;
-    return ClipRect(
-      child: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: CameraPreview(controller),
+    return ValueListenableBuilder<CameraValue>(
+      valueListenable: controller,
+      builder: (BuildContext context, CameraValue value, Widget? child) {
+        final Size? previewSize = value.previewSize;
+        if (!value.isInitialized || previewSize == null) {
+          return const SizedBox.shrink();
+        }
+        final Size layoutSize = arCameraPreviewLayoutSize(
+          previewSize,
+          value.deviceOrientation,
+        );
+        return ClipRect(
+          child: SizedBox.expand(
+            child: FittedBox(
+              fit: BoxFit.cover,
+              child: SizedBox.fromSize(
+                size: layoutSize,
+                child: CameraPreview(controller),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

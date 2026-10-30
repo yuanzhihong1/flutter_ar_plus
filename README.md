@@ -114,7 +114,9 @@ MediaPipe pose translation, and the final camera-space anchor position.
 
 Add a `Mesh`, glTF model, `WidgetComponent`, particles, or other scene content to the node returned by `nodeForFaceAnchor`. The anchor keeps that node attached while the face remains tracked and removes it after `anchorLostGracePeriod`.
 
-The example app includes [`StackChanArView`](example/lib/stack_chan_ar_view.dart), a Flutter port of the iOS StackChan face effect. It uses ARKit-compatible face-center offsets, the bundled GLB model, live eye/mouth expressions, JSON expression events, and optional JPEG frame snapshots.
+The example app places a procedural 3D pig on the tracked nose. It uses
+ARKit-compatible face-center offsets, live expressions, and the same anchor API
+that can be used for a glTF model or other Flutter Scene content.
 
 Use `ArFacePoseMapper` when you need to map a `FaceMeshResult` into the same
 metric camera space without an `ArView`, for example in an image or model
@@ -192,3 +194,24 @@ Add the camera entitlement to both macOS entitlement files:
 `ArView` supports Android, iOS, and macOS. The example targets Android 24+,
 iOS 15+, and macOS 12+. Face tracking requires native MediaPipe FFI support;
 web is intentionally not wired up yet.
+
+## Testing
+
+Run the plugin and example Dart test suites with Flutter GPU enabled:
+
+```sh
+./tool/test.sh
+```
+
+Flutter Scene requires Flutter GPU even for scene-graph unit tests. Without the
+flags, the renderer-dependent tests are reported as skipped by the default
+`flutter test` command. The script enables both Flutter GPU and Impeller.
+
+Build and test each mobile platform from the example app:
+
+```sh
+cd example
+flutter build apk --debug
+flutter build ios --simulator --debug
+flutter test integration_test/plugin_integration_test.dart -d <device-id>
+```

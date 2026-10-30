@@ -14,25 +14,31 @@ class FlutterArPlugin :
     //
     // This local reference serves to register the plugin with the Flutter Engine and unregister it
     // when the Flutter Engine is detached from the Activity
-    private lateinit var channel: MethodChannel
+    private var channel: MethodChannel? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_ar")
-        channel.setMethodCallHandler(this)
+        channel = MethodChannel(flutterPluginBinding.binaryMessenger, CHANNEL_NAME).also {
+            it.setMethodCallHandler(this)
+        }
     }
 
     override fun onMethodCall(
         call: MethodCall,
         result: Result
     ) {
-        if (call.method == "getPlatformVersion") {
-            result.success("Android ${android.os.Build.VERSION.RELEASE}")
-        } else {
-            result.notImplemented()
+        when (call.method) {
+            "getPlatformVersion" ->
+                result.success("Android ${android.os.Build.VERSION.RELEASE}")
+            else -> result.notImplemented()
         }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+        channel?.setMethodCallHandler(null)
+        channel = null
+    }
+
+    private companion object {
+        const val CHANNEL_NAME = "flutter_ar"
     }
 }
