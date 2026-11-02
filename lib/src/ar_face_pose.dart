@@ -259,7 +259,7 @@ class ArFacePoseMapper {
       }
     }
 
-    // MediaPipe 运行时相机朝向 -Z，而 Flutter Scene 相机朝向 +Z。
+    // MediaPipe 运行时相机朝向 -Z，而 Flutter Scene 相机朝向 +Z
     // S 翻转相机空间 Z 轴，F 将内容左右约定映射到 MediaPipe 规范人脸轴。
     // 应用 S * R * F 后，偏航方向与头部一致，同时不会镜像俯仰。
     final Matrix4 contentRotation = Matrix4.diagonal3Values(1, 1, -1)
