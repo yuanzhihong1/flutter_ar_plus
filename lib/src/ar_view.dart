@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:camera_macos/camera_macos.dart';
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show DeviceOrientation;
 import 'package:flutter/widgets.dart' hide Matrix4;
@@ -587,7 +588,7 @@ class ArView extends StatefulWidget {
   /// 是否在场景后方显示实时相机画面。
   final bool showCameraPreview;
 
-  /// 是否显示追踪状态与帧率小徽标。
+  /// 是否在人脸尚未追踪到时显示小型活动指示器。
   final bool showsStatistics;
 
   /// 可选的自定义加载界面。当前相机启动进度固定为 0。
@@ -658,9 +659,6 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
 
   Size _viewportSize = Size.zero;
   DateTime? _lastProcessedAt;
-  DateTime? _fpsWindowStartedAt;
-  int _fpsFrames = 0;
-  double _fps = 0;
   int? _lastInputRotation;
   bool? _lastInputMirror;
   bool _reportedTrackingError = false;
@@ -1193,7 +1191,6 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
       if (!_active || _disposed || !identical(pipeline, _pipeline)) {
         return;
       }
-      _recordInferenceFrame();
       final FaceMeshResult? mesh = result.meshResult;
       if (mesh == null) {
         _markFaceLost();
@@ -1455,24 +1452,6 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     }
   }
 
-  void _recordInferenceFrame() {
-    final DateTime now = DateTime.now();
-    final DateTime? started = _fpsWindowStartedAt;
-    if (started == null) {
-      _fpsWindowStartedAt = now;
-      _fpsFrames = 1;
-      return;
-    }
-    _fpsFrames++;
-    final double elapsed = now.difference(started).inMicroseconds / 1000000.0;
-    if (elapsed >= 0.5) {
-      _fps = _fpsFrames / elapsed;
-      _fpsFrames = 0;
-      _fpsWindowStartedAt = now;
-      _refreshStatistics();
-    }
-  }
-
   void _refreshStatistics() {
     if (mounted && widget.showsStatistics) {
       _setState(() {});
@@ -1727,7 +1706,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     return Center(
       child:
           widget.loadingBuilder?.call(context, 0.0) ??
-          const _StatusPanel(title: '正在启动 AR 相机', message: '正在请求相机权限并加载人脸追踪…'),
+          const CupertinoActivityIndicator(radius: 14),
     );
   }
 
@@ -1746,57 +1725,22 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     if (custom != null) {
       return custom;
     }
-    return ColoredBox(
-      color: const Color(0xE6000000),
-      child: Center(
-        child: _StatusPanel(
-          title: 'AR 相机不可用',
-          message: error.message,
-          actions: <Widget>[
-            _ArTextButton(label: '重试', onPressed: retry),
-            if (error.canOpenSettings)
-              _ArTextButton(
-                label: '打开设置',
-                onPressed: () {
-                  unawaited(_openSettings());
-                },
-              ),
-          ],
-        ),
-      ),
+    return const ColoredBox(
+      color: Color(0xE6000000),
+      child: Center(child: CupertinoActivityIndicator(radius: 14)),
     );
   }
 
   Widget _buildStatistics(BuildContext context) {
-    final bool tracking = _faceAnchor != null;
-    return SafeArea(
+    if (_faceAnchor != null) {
+      return const SizedBox.shrink();
+    }
+    return const SafeArea(
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0x99000000),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                child: Text(
-                  '${tracking ? '已追踪人脸' : '搜索中'}'
-                  ' · ${_fps > 0 ? _fps.toStringAsFixed(1) : '--'} 帧/秒',
-                  style: const TextStyle(
-                    color: Color(0xFFFFFFFF),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          padding: EdgeInsets.all(12),
+          child: IgnorePointer(child: CupertinoActivityIndicator(radius: 8)),
         ),
       ),
     );
@@ -1833,98 +1777,6 @@ class _CameraPreviewLayer extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _StatusPanel extends StatelessWidget {
-  const _StatusPanel({
-    required this.title,
-    required this.message,
-    this.actions = const <Widget>[],
-  });
-
-  final String title;
-  final String message;
-  final List<Widget> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xCC111111),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFFFFFFFF),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xCCFFFFFF),
-                  fontSize: 14,
-                  height: 1.35,
-                ),
-              ),
-              if (actions.isNotEmpty) const SizedBox(height: 16),
-              if (actions.isNotEmpty)
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: actions,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ArTextButton extends StatelessWidget {
-  const _ArTextButton({required this.label, required this.onPressed});
-
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onPressed,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0x33FFFFFF),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFFFFFFFF),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
