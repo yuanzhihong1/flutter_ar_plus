@@ -1492,7 +1492,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
       FlutterErrorDetails(
         exception: error,
         stack: stackTrace,
-        library: 'flutter_ar',
+        library: 'flutter_ar_plus',
         context: ErrorDescription('调用 ArView.$callback 时'),
       ),
     );

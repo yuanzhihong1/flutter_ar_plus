@@ -1,6 +1,6 @@
-# flutter_ar 示例
+# flutter_ar_plus 示例
 
-该示例展示如何在 Flutter 应用中使用 `flutter_ar`：
+该示例展示如何在 Flutter 应用中使用 `flutter_ar_plus`：
 
 - 实时相机预览与 MediaPipe 人脸追踪。
 - 从脸部中心锚点偏移，将程序化三维猪头附着到鼻尖。

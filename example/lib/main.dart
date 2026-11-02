@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
 

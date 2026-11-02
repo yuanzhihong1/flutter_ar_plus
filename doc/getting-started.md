@@ -1,6 +1,6 @@
 # 快速开始
 
-本文介绍如何从空 Flutter 应用接入 `flutter_ar`。示例只使用公开 API。
+本文介绍如何从空 Flutter 应用接入 `flutter_ar_plus`。示例只使用公开 API。
 
 ## 1. 检查环境
 
@@ -24,7 +24,7 @@ flutter devices
 dependencies:
   flutter:
     sdk: flutter
-  flutter_ar: ^0.2.0
+  flutter_ar_plus: ^0.2.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
   mediapipe_face_mesh: ^3.2.2
@@ -40,10 +40,10 @@ flutter pub get
 统一使用公开入口：
 
 ```dart
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 ```
 
-不要导入 `package:flutter_ar/src/...`。内部文件不属于稳定 API，可能在修订版本中调整。
+不要导入 `package:flutter_ar_plus/src/...`。内部文件不属于稳定 API，可能在修订版本中调整。
 
 ## 3. 配置平台
 
@@ -96,7 +96,7 @@ import 'package:flutter_ar/flutter_ar.dart';
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_scene/scene.dart';
 
 class FaceArPage extends StatefulWidget {
@@ -297,7 +297,7 @@ ArView(
     );
   },
   onError: (error, stackTrace) {
-    debugPrint('flutter_ar 错误：$error');
+    debugPrint('flutter_ar_plus 错误：$error');
   },
 );
 ```

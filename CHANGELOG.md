@@ -1,8 +1,15 @@
 # 更新日志
 
-本文件记录 `flutter_ar` 的重要变更。版本号遵循语义化版本规范。
+本文件记录 `flutter_ar_plus` 的重要变更。版本号遵循语义化版本规范。
 
 ## 0.2.0 - 2026-11-02
+
+### 项目更名
+
+- 项目根目录、Dart 包名、公开入口、示例包和测试包统一为 `flutter_ar_plus`。
+- 包导入统一为 `package:flutter_ar_plus/flutter_ar_plus.dart`。
+- Android 包名、iOS/macOS 插件名、CocoaPods 名称和方法通道统一为 `flutter_ar_plus`。
+- GitHub、pub.dev、文档和 CI 链接统一为 `flutter_ar_plus`。
 
 ### 破坏性 API 调整
 
@@ -42,7 +49,7 @@
 
 ### 项目结构
 
-- 将实现文件迁移到 `lib/src/`，公开 API 统一从 `package:flutter_ar/flutter_ar.dart`
+- 将实现文件迁移到 `lib/src/`，公开 API 统一从 `package:flutter_ar_plus/flutter_ar_plus.dart`
   导出。
 - 移除公开入口中的示例平台方法通道 API，避免将生成代码误认为稳定接口。
 - 清理未声明支持的 Linux、Windows、Web 目录、IDE 配置和本地生成文件。

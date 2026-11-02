@@ -1,6 +1,6 @@
 # 发布流程
 
-本文面向维护者，说明 `flutter_ar` 的版本发布步骤。
+本文面向维护者，说明 `flutter_ar_plus` 的版本发布步骤。
 
 ## 版本策略
 
@@ -56,7 +56,7 @@
 2. 创建带注解标签：
 
    ```sh
-   git tag -a v0.2.0 -m "flutter_ar 0.2.0"
+   git tag -a v0.2.0 -m "flutter_ar_plus 0.2.0"
    ```
 
 3. 推送提交与标签。

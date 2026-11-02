@@ -1,4 +1,4 @@
-import 'package:flutter_ar_example/nose_pig_node.dart';
+import 'package:flutter_ar_plus_example/nose_pig_node.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:flutter_test/flutter_test.dart';
 

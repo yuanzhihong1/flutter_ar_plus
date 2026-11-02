@@ -2,6 +2,28 @@
 
 本页记录破坏性公开 API 变更和推荐迁移方式。
 
+## 包名与导入路径
+
+项目已统一更名为 `flutter_ar_plus`。升级后需要同步修改依赖名和导入路径：
+
+```yaml
+dependencies:
+  flutter_ar_plus: ^0.2.0
+```
+
+```dart
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
+```
+
+原生插件类、CocoaPods 名称和方法通道也使用 `flutter_ar_plus` 标识。更新依赖后请重新执行：
+
+```sh
+flutter clean
+flutter pub get
+```
+
+iOS 与 macOS 应用还应重新执行 Pod 安装，确保旧插件缓存不会继续参与构建。
+
 ## 0.1.x → 0.2.0
 
 `0.2.0` 以 Flutter 生态常用的命名和语义为准，移除了早期兼容别名，并清理了含义不准确的参数。

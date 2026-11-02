@@ -1,5 +1,5 @@
-name: flutter_ar_example
-description: 演示 flutter_ar 实时人脸 AR 叠加能力的示例应用。
+name: flutter_ar_plus_example
+description: 演示 flutter_ar_plus 实时人脸 AR 叠加能力的示例应用。
 version: 1.0.0+1
 publish_to: 'none'
 
@@ -16,7 +16,7 @@ dependencies:
   mediapipe_face_mesh: ^3.2.2
   vector_math: ^2.4.4
 
-  flutter_ar:
+  flutter_ar_plus:
     path: ../
 
 dev_dependencies:

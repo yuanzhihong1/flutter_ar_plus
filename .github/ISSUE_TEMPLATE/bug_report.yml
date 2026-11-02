@@ -1,5 +1,5 @@
 name: 缺陷报告
-description: 报告可复现的 flutter_ar 缺陷
+description: 报告可复现的 flutter_ar_plus 缺陷
 title: "[缺陷] "
 labels:
   - bug

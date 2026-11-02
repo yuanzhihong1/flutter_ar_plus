@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yuanzhihong.flutter_ar_example"
+    namespace = "com.yuanzhihong.flutter_ar_plus_example"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         // TODO：请替换为自己唯一的 Application ID。
-        applicationId = "com.yuanzhihong.flutter_ar_example"
+        applicationId = "com.yuanzhihong.flutter_ar_plus_example"
         // 可根据应用需求调整以下配置。
         // 详情参阅：https://flutter.dev/to/review-gradle-config。
         minSdk = 24

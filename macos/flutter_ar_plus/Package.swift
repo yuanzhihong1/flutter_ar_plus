@@ -4,19 +4,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "flutter_ar",
+    name: "flutter_ar_plus",
     platforms: [
         .macOS("12.0")
     ],
     products: [
-        .library(name: "flutter-ar", targets: ["flutter_ar"])
+        .library(name: "flutter_ar_plus", targets: ["flutter_ar_plus"])
     ],
     dependencies: [
         .package(name: "FlutterFramework", path: "../FlutterFramework")
     ],
     targets: [
         .target(
-            name: "flutter_ar",
+            name: "flutter_ar_plus",
             dependencies: [
                 .product(name: "FlutterFramework", package: "FlutterFramework")
             ],

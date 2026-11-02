@@ -1,7 +1,7 @@
 import 'dart:ui' show Size;
 
 import 'package:flutter/services.dart' show DeviceOrientation;
-import 'package:flutter_ar/src/ar_view_layout.dart';
+import 'package:flutter_ar_plus/src/ar_view_layout.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,9 +1,9 @@
 # API 参考
 
-本文描述 `flutter_ar` 当前公开的稳定入口。所有库内类型均从以下入口导入：
+本文描述 `flutter_ar_plus` 当前公开的稳定入口。所有库内类型均从以下入口导入：
 
 ```dart
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 ```
 
 `ArView` 的参数和返回值会引用 `camera`、`flutter_scene`、`mediapipe_face_mesh` 与

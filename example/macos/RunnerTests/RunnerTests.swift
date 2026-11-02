@@ -5,7 +5,7 @@ import XCTest
 // 如果插件在 Package.swift 中显式设置为 "type: .dynamic"，
 // 则需要在 Xcode 中将插件添加为 RunnerTests 的依赖。
 
-@testable import flutter_ar
+@testable import flutter_ar_plus
 
 // 本文件演示插件 Swift 实现的简单单元测试。
 //
@@ -14,7 +14,7 @@ import XCTest
 class RunnerTests: XCTestCase {
 
   func testGetPlatformVersion() {
-    let plugin = FlutterArPlugin()
+    let plugin = FlutterArPlusPlugin()
 
     let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
 

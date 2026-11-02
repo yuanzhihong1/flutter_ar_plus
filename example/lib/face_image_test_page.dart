@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:mediapipe_face_mesh/face_mesh_painter.dart';
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';

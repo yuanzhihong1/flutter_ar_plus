@@ -13,7 +13,7 @@
 
 优先使用仓库的 GitHub 私密安全报告功能：
 
-<https://github.com/yuanzhihong/flutter_ar/security/advisories/new>
+<https://github.com/yuanzhihong/flutter_ar_plus/security/advisories/new>
 
 报告中请包含：
 
@@ -28,7 +28,7 @@
 
 ## 相机与隐私
 
-`flutter_ar` 会访问相机图像并将其送入本地 MediaPipe 推理流程。项目本身不包含上传相机
+`flutter_ar_plus` 会访问相机图像并将其送入本地 MediaPipe 推理流程。项目本身不包含上传相机
 图像的逻辑。应用开发者应：
 
 - 明确说明相机用途，并只在获得授权后访问相机。

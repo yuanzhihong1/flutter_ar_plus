@@ -1,4 +1,4 @@
-group = "com.yuanzhihong.flutter_ar"
+group = "com.yuanzhihong.flutter_ar_plus"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -26,7 +26,7 @@ plugins {
 }
 
 android {
-    namespace = "com.yuanzhihong.flutter_ar"
+    namespace = "com.yuanzhihong.flutter_ar_plus"
 
     compileSdk = 36
 

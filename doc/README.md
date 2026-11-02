@@ -1,6 +1,6 @@
-# flutter_ar 文档
+# flutter_ar_plus 文档
 
-本目录包含 `flutter_ar` 的中文使用、设计和维护文档。
+本目录包含 `flutter_ar_plus` 的中文使用、设计和维护文档。
 
 ## 新用户
 

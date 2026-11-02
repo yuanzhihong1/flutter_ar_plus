@@ -10,7 +10,7 @@ require 'json'
 # TensorFlowLiteC.xcframework. CocoaPods rejects the two identical framework
 # names before Xcode starts compiling. The runtime itself must stay bundled
 # with mediapipe_face_mesh because its models use MediaPipe custom TFLite ops.
-module FlutterArMediaPipePod
+module FlutterArPlusMediaPipePod
   module_function
 
   def install!(podfile_directory)
@@ -35,7 +35,7 @@ module FlutterArMediaPipePod
   def prepare_pod(source, podfile_directory)
     plugin_version = File.basename(source)
     build_root = File.expand_path(
-      "Flutter/ephemeral/flutter_ar_pods/mediapipe_face_mesh-#{plugin_version}",
+      "Flutter/ephemeral/flutter_ar_plus_pods/mediapipe_face_mesh-#{plugin_version}",
       podfile_directory,
     )
     FileUtils.mkdir_p(build_root)
@@ -53,7 +53,7 @@ module FlutterArMediaPipePod
         s.name             = 'mediapipe_face_mesh'
         s.version          = '3.2.2'
         s.summary          = 'MediaPipe Face Mesh for Flutter.'
-        s.description      = 'Patched by flutter_ar to avoid a TFLite XCFramework name collision.'
+        s.description      = 'Patched by flutter_ar_plus to avoid a TFLite XCFramework name collision.'
         s.homepage         = 'https://github.com/cornpip/mediapipe_face_mesh.git'
         s.license          = { :file => 'LICENSE' }
         s.author           = { 'mediapipe_face_mesh contributors' => 'cornpip7777@gmail.com' }

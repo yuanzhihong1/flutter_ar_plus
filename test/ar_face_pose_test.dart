@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui' show Size;
 
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 import 'package:vector_math/vector_math.dart';

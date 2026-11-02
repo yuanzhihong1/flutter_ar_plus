@@ -4,7 +4,7 @@
 // 在此之前，以下值默认使用项目名称。
 //
 // 应用名称，默认也会作为 Flutter 窗口标题。
-PRODUCT_NAME = flutter_ar_example
+PRODUCT_NAME = flutter_ar_plus_example
 
 // 应用 Bundle 标识符。
 PRODUCT_BUNDLE_IDENTIFIER = com.yuanzhihong.flutterArExample

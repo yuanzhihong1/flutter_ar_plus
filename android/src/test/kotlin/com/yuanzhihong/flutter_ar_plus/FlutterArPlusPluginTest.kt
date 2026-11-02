@@ -1,4 +1,4 @@
-package com.yuanzhihong.flutter_ar
+package com.yuanzhihong.flutter_ar_plus
 
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -13,10 +13,10 @@ import kotlin.test.assertTrue
  * 也可以直接在支持 JUnit 的 IDE（例如 Android Studio）中运行。
  */
 
-internal class FlutterArPluginTest {
+internal class FlutterArPlusPluginTest {
     @Test
     fun onMethodCall_getPlatformVersion_returnsExpectedValue() {
-        val plugin = FlutterArPlugin()
+        val plugin = FlutterArPlusPlugin()
 
         val call = MethodCall("getPlatformVersion", null)
         val result = RecordingResult()
@@ -27,7 +27,7 @@ internal class FlutterArPluginTest {
 
     @Test
     fun onMethodCall_unknownMethod_reportsNotImplemented() {
-        val plugin = FlutterArPlugin()
+        val plugin = FlutterArPlusPlugin()
 
         val call = MethodCall("unknownMethod", null)
         val result = RecordingResult()

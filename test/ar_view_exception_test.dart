@@ -1,4 +1,4 @@
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

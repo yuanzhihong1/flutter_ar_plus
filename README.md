@@ -1,11 +1,11 @@
-# flutter_ar
+# flutter_ar_plus
 
-[![pub package](https://img.shields.io/pub/v/flutter_ar.svg)](https://pub.dev/packages/flutter_ar)
-[![Flutter CI](https://github.com/yuanzhihong/flutter_ar/actions/workflows/ci.yml/badge.svg)](https://github.com/yuanzhihong/flutter_ar/actions/workflows/ci.yml)
+[![pub package](https://img.shields.io/pub/v/flutter_ar_plus.svg)](https://pub.dev/packages/flutter_ar_plus)
+[![Flutter CI](https://github.com/yuanzhihong/flutter_ar_plus/actions/workflows/ci.yml/badge.svg)](https://github.com/yuanzhihong/flutter_ar_plus/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-%E2%89%A53.47-02569B?logo=flutter)](https://flutter.dev)
 
-`flutter_ar` 是一个面向 Flutter 的实时人脸 AR 叠加库。它将相机预览、MediaPipe Face Mesh
+`flutter_ar_plus` 是一个面向 Flutter 的实时人脸 AR 叠加库。它将相机预览、MediaPipe Face Mesh
 与 Flutter Scene 组合起来，为三维模型、程序化网格和 Widget 提供持续更新的人脸锚点。
 
 项目目前处于 `0.x` 阶段，公开 API 已按 Dart 与 Flutter 的常见约定整理。版本语义、兼容策略和
@@ -47,7 +47,7 @@
 
 ```yaml
 dependencies:
-  flutter_ar: ^0.2.0
+  flutter_ar_plus: ^0.2.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
   mediapipe_face_mesh: ^3.2.2
@@ -63,17 +63,17 @@ flutter pub get
 库的稳定公开 API 只从以下入口导出：
 
 ```dart
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 ```
 
-请不要直接导入 `package:flutter_ar/src/...`，这些文件不属于兼容性承诺范围。
+请不要直接导入 `package:flutter_ar_plus/src/...`，这些文件不属于兼容性承诺范围。
 
 ## 快速开始
 
 ```dart
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ar/flutter_ar.dart';
+import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
 
@@ -329,7 +329,7 @@ flutter test --enable-flutter-gpu --enable-impeller
 
 公开兼容范围包括：
 
-- `package:flutter_ar/flutter_ar.dart` 导出的类型和成员。
+- `package:flutter_ar_plus/flutter_ar_plus.dart` 导出的类型和成员。
 - README 与 `doc/` 中明确描述的行为。
 - 错误码、回调时序和资源所有权约定。
 

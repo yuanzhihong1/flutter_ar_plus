@@ -1,4 +1,4 @@
-package com.yuanzhihong.flutter_ar
+package com.yuanzhihong.flutter_ar_plus
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -6,8 +6,8 @@ import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 
-/** flutter_ar 插件入口。 */
-class FlutterArPlugin :
+/** flutter_ar_plus 插件入口。 */
+class FlutterArPlusPlugin :
     FlutterPlugin,
     MethodCallHandler {
     // 用于 Flutter 与 Android 原生层通信的方法通道。
@@ -39,6 +39,6 @@ class FlutterArPlugin :
     }
 
     private companion object {
-        const val CHANNEL_NAME = "flutter_ar"
+        const val CHANNEL_NAME = "flutter_ar_plus"
     }
 }

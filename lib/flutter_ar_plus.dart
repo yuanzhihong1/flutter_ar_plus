@@ -3,7 +3,7 @@
 /// 对外使用时只需导入：
 ///
 /// ```dart
-/// import 'package:flutter_ar/flutter_ar.dart';
+/// import 'package:flutter_ar_plus/flutter_ar_plus.dart';
 /// ```
 ///
 /// 主要入口是 [ArView]，它负责相机预览、人脸追踪和 Flutter Scene
