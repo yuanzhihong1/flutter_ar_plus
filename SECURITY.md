@@ -13,7 +13,7 @@
 
 优先使用仓库的 GitHub 私密安全报告功能：
 
-<https://github.com/yuanzhihong/flutter_ar_plus/security/advisories/new>
+<https://github.com/yuanzhihong1/flutter_ar_plus/security/advisories/new>
 
 报告中请包含：
 

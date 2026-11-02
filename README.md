@@ -1,7 +1,7 @@
 # flutter_ar_plus
 
 [![pub package](https://img.shields.io/pub/v/flutter_ar_plus.svg)](https://pub.dev/packages/flutter_ar_plus)
-[![Flutter CI](https://github.com/yuanzhihong/flutter_ar_plus/actions/workflows/ci.yml/badge.svg)](https://github.com/yuanzhihong/flutter_ar_plus/actions/workflows/ci.yml)
+[![Flutter CI](https://github.com/yuanzhihong1/flutter_ar_plus/actions/workflows/ci.yml/badge.svg)](https://github.com/yuanzhihong1/flutter_ar_plus/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-%E2%89%A53.47-02569B?logo=flutter)](https://flutter.dev)
 

@@ -9,9 +9,9 @@ Pod::Spec.new do |s|
   s.description      = <<-DESC
 基于 Camera、MediaPipe Face Mesh 与 Flutter Scene 的实时人脸 AR 叠加库。
                        DESC
-  s.homepage         = 'https://github.com/yuanzhihong/flutter_ar_plus'
+  s.homepage         = 'https://github.com/yuanzhihong1/flutter_ar_plus'
   s.license          = { :file => '../LICENSE' }
-  s.author           = { 'flutter_ar_plus contributors' => 'https://github.com/yuanzhihong/flutter_ar_plus/issues' }
+  s.author           = { 'flutter_ar_plus contributors' => 'https://github.com/yuanzhihong1/flutter_ar_plus/issues' }
 
   s.source           = { :path => '.' }
   s.source_files = 'flutter_ar_plus/Sources/flutter_ar_plus/**/*'

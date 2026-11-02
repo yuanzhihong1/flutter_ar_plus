@@ -1,9 +1,9 @@
 name: flutter_ar_plus
 description: 面向 Flutter 的实时人脸 AR 叠加库，提供相机预览、MediaPipe 人脸追踪与 Flutter Scene 内容挂载。
 version: 1.0.0
-repository: https://github.com/yuanzhihong/flutter_ar_plus
-documentation: https://github.com/yuanzhihong/flutter_ar_plus/blob/main/doc/README.md
-issue_tracker: https://github.com/yuanzhihong/flutter_ar_plus/issues
+repository: https://github.com/yuanzhihong1/flutter_ar_plus
+documentation: https://github.com/yuanzhihong1/flutter_ar_plus/blob/main/doc/README.md
+issue_tracker: https://github.com/yuanzhihong1/flutter_ar_plus/issues
 topics:
   - ar
   - camera
