@@ -10,10 +10,10 @@ enum ArFaceAnchorOrigin {
   /// 将锚点放在鼻尖表面。
   ///
   /// 适合需要直接定位鼻部挂件的场景。默认值使用
-  /// [ArFaceAnchorOrigin.faceCenter]，以保持与 ARKit 一致。
+  /// [ArFaceAnchorOrigin.faceCenter]。
   noseTip,
 
-  /// 将锚点放在脸部中心，与 ARKit 的人脸锚点原点保持一致。
+  /// 将锚点放在脸部中心。
   ///
   /// 这是 [ArView] 与 [ArFacePoseMapper] 的默认值。内容可使用相对脸部
   /// 中心的偏移来定位鼻子、眼睛或其他面部区域。
@@ -67,7 +67,7 @@ class ArFacePose {
 /// [ArView] 使用相同约定，因此这里的投影工作只需处理相机画面通过
 /// `BoxFit.cover` 裁剪后产生的偏移。
 ///
-/// 默认锚点原点为 [ArFaceAnchorOrigin.faceCenter]，与 ARKit 保持一致。
+/// 默认锚点原点为 [ArFaceAnchorOrigin.faceCenter]。
 class ArFacePoseMapper {
   /// 创建使用指定垂直视场角 [verticalFovDegrees] 的映射器。
   const ArFacePoseMapper({
@@ -187,8 +187,8 @@ class ArFacePoseMapper {
           nose.dy.clamp(0.0, 1.0).toDouble(),
         );
       case ArFaceAnchorOrigin.faceCenter:
-        // 局部 +Z 轴由人脸指向相机。沿该轴从鼻尖表面向后移动到
-        // ARKit 的脸部中心。
+        // 局部 +Z 轴由人脸指向相机。沿该轴从鼻尖表面向后移动，
+        // 得到估计的脸部中心。
         final Vector3 towardCamera = rotation.rotated(Vector3(0, 0, 1));
         position = nosePosition - towardCamera * (distance - noseDistance);
         final double halfHeightAtCenter = tanHalfFov * distance;

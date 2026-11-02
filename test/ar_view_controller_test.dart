@@ -19,13 +19,17 @@ void main() {
     scene.dispose();
   });
 
-  test('ArView 使用与 ARKit 一致的默认参数', () {
+  test('ArView 使用稳定的默认参数', () {
     final ArView view = ArView(scene: scene);
     expect(view.scene, same(scene));
-    expect(view.faceAnchorOrigin, ArFaceAnchorOrigin.faceCenter);
+    expect(view.anchorOrigin, ArFaceAnchorOrigin.faceCenter);
     expect(view.preferredFramesPerSecond, 60);
     expect(view.cameraResolution, ResolutionPreset.high);
+    expect(view.faceTrackingEnabled, isTrue);
     expect(view.enableFaceBlendshapes, isTrue);
+    expect(view.showCameraPreview, isTrue);
+    expect(view.showTrackingIndicator, isFalse);
+    expect(view.anchorLostGracePeriod, const Duration(milliseconds: 350));
   }, skip: sceneSkipReason);
 
   test('未挂载时状态查询返回安全值', () {
@@ -54,7 +58,7 @@ void main() {
     expect(node.scale.x, closeTo(0.75, 1e-6));
   }, skip: sceneSkipReason);
 
-  test('moves, locates, and removes a node', () {
+  test('移动、查找并移除节点', () {
     final Node node = controller.addNode(
       Node(name: 'lamp'),
       position: Vector3(0, 0, 1),
@@ -77,7 +81,7 @@ void main() {
     expect(controller.nodeNamed('lamp'), isNull);
   }, skip: sceneSkipReason);
 
-  test('does not add a node to the scene twice', () {
+  test('不会重复添加同一节点', () {
     final Node node = controller.addNode(Node(name: 'once'));
     final int childCount = scene.root.children.length;
 
@@ -87,7 +91,7 @@ void main() {
     expect(node.position.z, closeTo(1.5, 1e-6));
   }, skip: sceneSkipReason);
 
-  test('rejects a node owned by another scene', () {
+  test('拒绝属于其他场景的节点', () {
     final Scene otherScene = Scene();
     addTearDown(otherScene.dispose);
     final Node node = Node(name: 'foreign');

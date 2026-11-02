@@ -1,6 +1,6 @@
 # 快速开始
 
-本文介绍如何从零接入 `flutter_ar`。
+本文介绍如何从空 Flutter 应用接入 `flutter_ar`。示例只使用公开 API。
 
 ## 1. 检查环境
 
@@ -14,19 +14,20 @@ flutter devices
 - Flutter 3.47.0 或更高版本。
 - Dart 3.13.7 或更高版本。
 - Android、iOS 或 macOS 目标设备。
-- 真机更适合验证相机、权限和人脸追踪。
+- 建议使用真机验证相机、权限、GPU 和实时推理。
 
 ## 2. 添加依赖
 
-在 `pubspec.yaml` 中配置：
+在应用的 `pubspec.yaml` 中配置：
 
 ```yaml
 dependencies:
   flutter:
     sdk: flutter
-  flutter_ar: ^0.1.0
+  flutter_ar: ^0.2.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
+  mediapipe_face_mesh: ^3.2.2
   vector_math: ^2.4.4
 ```
 
@@ -36,32 +37,30 @@ dependencies:
 flutter pub get
 ```
 
-`flutter_ar` 的公开入口只有一个：
+统一使用公开入口：
 
 ```dart
 import 'package:flutter_ar/flutter_ar.dart';
 ```
 
-不要直接导入 `package:flutter_ar/src/...`，这些文件不属于稳定 API。
+不要导入 `package:flutter_ar/src/...`。内部文件不属于稳定 API，可能在修订版本中调整。
 
-## 3. 配置相机权限
+## 3. 配置平台
 
 ### Android
 
-在 `android/app/src/main/AndroidManifest.xml` 中添加：
+在 `android/app/src/main/AndroidManifest.xml` 中声明相机权限：
 
 ```xml
 <uses-permission android:name="android.permission.CAMERA" />
 ```
 
-同时启用 Flutter GPU：
+在同一个文件的 `<application>` 节点中启用 Flutter GPU：
 
 ```xml
-<application>
-  <meta-data
-      android:name="io.flutter.embedding.android.EnableFlutterGPU"
-      android:value="true" />
-</application>
+<meta-data
+    android:name="io.flutter.embedding.android.EnableFlutterGPU"
+    android:value="true" />
 ```
 
 ### iOS
@@ -112,6 +111,7 @@ class _FaceArPageState extends State<FaceArPage> {
 
   @override
   void dispose() {
+    // ArView 不拥有 Scene，应用必须自行释放。
     scene.dispose();
     super.dispose();
   }
@@ -125,6 +125,8 @@ class _FaceArPageState extends State<FaceArPage> {
   }
 }
 ```
+
+`ArView` 会自动请求相机权限、初始化相机、启动 MediaPipe 管线，并显示相机与场景。
 
 ## 5. 添加人脸内容
 
@@ -147,31 +149,69 @@ class FaceAnchorNodeDelegate extends ArViewDelegate {
 }
 ```
 
-当人脸首次被检测到时，`ArView` 会调用 `nodeForFaceAnchor`，把返回节点添加到场景，并在后续帧
-更新节点变换。人脸持续丢失超过 `anchorLostGracePeriod` 后，锚点及其节点会被移除。
+首次检测到人脸时，`ArView` 会调用 `nodeForFaceAnchor`，将返回的节点添加到场景，并在后续帧更新
+锚点变换。人脸持续丢失超过 `anchorLostGracePeriod` 后，锚点及其节点会被移除。
 
-## 6. 默认参数与 ARKit
+如果需要在运行时修改内容，可以保存节点引用并实现生命周期回调：
 
-`ArView` 的默认值按 ARKit 人脸追踪的常见行为设置：
+```dart
+class AnimatedFaceDelegate extends ArViewDelegate {
+  Node? content;
 
-| 参数 | 默认值 | 说明 |
-| --- | --- | --- |
-| `faceAnchorOrigin` | `faceCenter` | 与 ARKit 脸部中心锚点一致 |
-| `preferredFramesPerSecond` | `60` | 与 ARSCNView 默认帧率一致 |
-| `cameraResolution` | `ResolutionPreset.high` | 使用较高相机图像质量 |
-| `enableFaceBlendshapes` | `true` | 提供 ARKit 风格表情系数 |
-| `cameraLensDirection` | `front` | 人脸追踪默认使用前置相机 |
-| `showCameraPreview` | `true` | 显示相机背景 |
-| `showsStatistics` | `false` | 默认不显示调试统计 |
+  @override
+  Node? nodeForFaceAnchor(ArView view, ArFaceAnchor anchor) {
+    content = Node(name: 'animated-content');
+    return content;
+  }
 
-如果需要在脸部中心以外的位置放置内容，应使用相对脸部中心的偏移，或显式切换为鼻尖锚点：
+  @override
+  void didUpdateNode(ArView view, ArFaceAnchor anchor) {
+    content?.rotation = anchor.rotation;
+  }
+
+  @override
+  void didRemoveNode(ArView view, ArFaceAnchor anchor) {
+    content = null;
+  }
+}
+```
+
+不要在每帧回调中执行同步 I/O、纹理上传或复杂对象分配。
+
+## 6. 选择锚点原点
+
+默认锚点是脸部中心：
 
 ```dart
 ArView(
   scene: scene,
-  faceAnchorOrigin: ArFaceAnchorOrigin.noseTip,
+  delegate: const FaceAnchorNodeDelegate(),
+  anchorOrigin: ArFaceAnchorOrigin.faceCenter,
 );
 ```
+
+需要把内容直接放在鼻尖时，可切换为鼻尖原点：
+
+```dart
+ArView(
+  scene: scene,
+  delegate: const NoseDecorationDelegate(),
+  anchorOrigin: ArFaceAnchorOrigin.noseTip,
+);
+```
+
+两种原点都使用相同的头部旋转。内容尺寸可参考 `anchor.faceWidthMeters`：
+
+```dart
+@override
+Node? nodeForFaceAnchor(ArView view, ArFaceAnchor anchor) {
+  final node = createDecoration();
+  node.scale = Vector3.all(anchor.faceWidthMeters / 0.14);
+  return node;
+}
+```
+
+脸宽和距离均为估算值。极端角度、遮挡和远距离场景下出现波动属于预期行为。
 
 ## 7. 使用控制器
 
@@ -179,7 +219,6 @@ ArView(
 final Scene scene = Scene();
 final ArViewController controller = ArViewController(scene: scene);
 
-// 场景挂载前也可以添加节点。
 controller.addNode(
   Node(name: 'debug-marker'),
   position: Vector3(0, 0, 1),
@@ -191,18 +230,49 @@ ArView(
 );
 ```
 
-`currentFaceAnchor` 与 `isTracking` 在视图未挂载时会返回安全的空状态值。`camera`、
-`viewportSize`、`projectPoint`、`unprojectPoint` 和 `hitTest` 等能力要求 `ArView` 已挂载。
-
-静态检查代码前可以判断：
+控制器在视图挂载前可以执行节点与局部变换操作。屏幕空间查询要求视图已挂载：
 
 ```dart
 if (controller.isAttached) {
   final anchor = controller.currentFaceAnchor;
+  if (anchor != null) {
+    final screenPoint = controller.projectPoint(anchor.position);
+    debugPrint('人脸屏幕坐标：$screenPoint');
+  }
 }
 ```
 
-## 8. 自定义加载与错误界面
+`camera`、`viewportSize`、`projectPoint`、`unprojectPoint`、`hitTest` 和 `hitTestAll` 在控制器
+未挂载时会抛出 `StateError`。
+
+## 8. 控制表情系数
+
+表情系数默认启用，可通过 `anchor.blendshapes` 读取 MediaPipe 的当前表情数据：
+
+```dart
+import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart'
+    show FaceBlendshape;
+
+@override
+void didUpdateNode(ArView view, ArFaceAnchor anchor) {
+  final jawOpen =
+      anchor.blendshapes?[FaceBlendshape.jawOpen] ?? 0.0;
+  // 使用系数驱动动画或渲染状态。
+}
+```
+
+不需要表情数据时显式关闭，以减少每帧推理开销：
+
+```dart
+ArView(
+  scene: scene,
+  enableFaceBlendshapes: false,
+);
+```
+
+具体关键名、系数数量和取值范围由当前 `mediapipe_face_mesh` 版本提供。
+
+## 9. 自定义加载与错误界面
 
 ```dart
 ArView(
@@ -227,40 +297,36 @@ ArView(
     );
   },
   onError: (error, stackTrace) {
-    debugPrint('AR 错误：$error');
+    debugPrint('flutter_ar 错误：$error');
   },
 );
 ```
 
-## 9. 控制表情系数
-
-表情系数默认启用，以保持与 ARKit 人脸锚点一致。可通过 `anchor.blendshapes` 获取当前帧的
-52 个 ARKit 风格系数。不需要表情时建议显式关闭，以减少每帧推理开销：
-
-```dart
-ArView(
-  scene: scene,
-  enableFaceBlendshapes: false,
-);
-```
+- `errorBuilder` 负责权限、相机和追踪错误的主界面。
+- `onError` 接收运行错误，包括相机、追踪和委托回调产生的错误。
+- 如果 `onError` 自身抛错，库会通过 `FlutterError.reportError` 报告，避免递归回调。
+- 按 `ArViewErrorCode` 分支处理业务逻辑，不要依赖 `message` 的完整文本。
 
 ## 10. 验证集成
 
-启动示例：
+先运行静态图片模式，排除相机与权限问题：
 
 ```sh
 cd example
-flutter run -d macos
-```
-
-静态图片验证：
-
-```sh
 flutter run -d macos --dart-define=FACE_IMAGE_TEST=true
 ```
 
-运行完整测试：
+再运行实时相机模式：
+
+```sh
+flutter run -d macos
+```
+
+完整测试：
 
 ```sh
 ./tool/test.sh
 ```
+
+如果画面或追踪异常，请继续阅读 [故障排查](troubleshooting.md) 与
+[平台与能力限制](limitations.md)。

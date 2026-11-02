@@ -1,6 +1,6 @@
 import 'dart:ui' as ui;
 
-import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_ar/flutter_ar.dart';

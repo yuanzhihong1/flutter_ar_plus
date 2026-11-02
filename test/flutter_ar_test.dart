@@ -8,4 +8,12 @@ void main() {
     expect(mapper.verticalFovDegrees, 63);
     expect(mapper.anchorOrigin, ArFaceAnchorOrigin.faceCenter);
   });
+
+  test('公开入口导出错误回调类型', () {
+    void onError(Object error, StackTrace stackTrace) {}
+
+    final ArViewErrorCallback callback = onError;
+
+    expect(callback, same(onError));
+  });
 }

@@ -7,7 +7,10 @@
 - [README](README.md)
 - [快速开始](doc/getting-started.md)
 - [API 参考](doc/api-reference.md)
+- [平台与能力限制](doc/limitations.md)
+- [性能指南](doc/performance.md)
 - [故障排查](doc/troubleshooting.md)
+- [迁移指南](doc/migration-guide.md)
 
 如果问题仍未解决，可以在 GitHub Discussions 或 Issue 中提问，并提供：
 

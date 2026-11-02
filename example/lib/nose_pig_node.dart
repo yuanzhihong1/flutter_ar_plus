@@ -139,7 +139,7 @@ Node _meshNode({
   return node;
 }
 
-/// 创建从 ARKit 脸部中心锚点偏移到鼻尖的猪头节点。
+/// 创建从脸部中心锚点偏移到鼻尖的猪头节点。
 Node createNosePigNodeAtFaceCenter({required double faceWidthMeters}) {
   final Node node = createNosePigNode(faceWidthMeters: faceWidthMeters);
   node.position = Vector3(0, -faceWidthMeters * 0.16, faceWidthMeters * 0.5);

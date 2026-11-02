@@ -13,7 +13,7 @@ void main() {
     expect(root.getChildByName('pig-child'), isNotNull);
   });
 
-  test('从 ARKit 脸部中心偏移到鼻尖', () {
+  test('从脸部中心偏移到鼻尖', () {
     final Node node = createNosePigNodeAtFaceCenter(faceWidthMeters: 0.15);
 
     expect(node.position.y, closeTo(-0.024, 1e-6));

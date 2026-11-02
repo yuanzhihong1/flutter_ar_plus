@@ -1,39 +1,45 @@
 # flutter_ar
 
 [![pub package](https://img.shields.io/pub/v/flutter_ar.svg)](https://pub.dev/packages/flutter_ar)
+[![Flutter CI](https://github.com/yuanzhihong/flutter_ar/actions/workflows/ci.yml/badge.svg)](https://github.com/yuanzhihong/flutter_ar/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-%E2%89%A53.47-02569B?logo=flutter)](https://flutter.dev)
 
-`flutter_ar` 是一个面向 Flutter 的实时人脸 AR 叠加库。它组合相机预览、MediaPipe Face Mesh
-和 Flutter Scene，将三维内容稳定地附着到人脸锚点上。
+`flutter_ar` 是一个面向 Flutter 的实时人脸 AR 叠加库。它将相机预览、MediaPipe Face Mesh
+与 Flutter Scene 组合起来，为三维模型、程序化网格和 Widget 提供持续更新的人脸锚点。
+
+项目目前处于 `0.x` 阶段，公开 API 已按 Dart 与 Flutter 的常见约定整理。版本语义、兼容策略和
+破坏性变更记录见 [更新日志](CHANGELOG.md) 与 [迁移指南](doc/migration-guide.md)。
 
 ## 特性
 
-- 使用 MediaPipe Face Mesh 追踪 478 个人脸关键点。
-- 提供一个持续更新的人脸锚点，并同步头部姿态、距离和实际脸宽。
-- 默认使用与 ARKit 一致的脸部中心锚点，也可切换为鼻尖锚点。
-- 支持 Android、iOS 和 macOS 的实时相机预览与人脸追踪。
-- 提供 `ArViewDelegate` 生命周期回调、命令式场景控制器和屏幕空间查询。
-- 可选用 52 个 ARKit 风格面部表情系数。
-- 内置相机权限处理、应用生命周期恢复、加载与错误界面。
-- 支持 glTF/GLB 模型、程序化网格、Widget 组件和其他 Flutter Scene 内容。
+- 使用 MediaPipe Face Mesh 进行单张人脸追踪。
+- 提供稳定的 `ArFaceAnchor`，同步位置、旋转、脸宽、相机距离和屏幕坐标。
+- 支持脸部中心与鼻尖两种锚点原点。
+- 把 Flutter Scene `Node` 直接挂载到人脸，支持 glTF/GLB、网格和 `WidgetComponent`。
+- 提供 `ArViewDelegate` 生命周期回调和 `ArViewController` 命令式场景控制。
+- 提供投影、反投影、射线检测、模型加载和错误处理能力。
+- 可选计算 MediaPipe 面部表情系数，用于驱动表情动画。
+- 内置权限请求、应用生命周期恢复、加载与错误状态。
+- 支持 Android、iOS 和 macOS。
 
 ## 平台支持
 
-| 平台 | 实时相机 | 人脸追踪 | 说明 |
+| 平台 | 相机预览 | 人脸追踪 | 最低建议版本 |
 | --- | --- | --- | --- |
-| Android | 支持 | 支持 | 建议 Android 7.0（API 24）及以上 |
-| iOS | 支持 | 支持 | 建议 iOS 15 及以上 |
-| macOS | 支持 | 支持 | 建议 macOS 12 及以上 |
-| Linux / Windows / Web | 暂不支持 | 暂不支持 | 不作为稳定平台承诺 |
+| Android | 支持 | 支持 | Android 7.0（API 24） |
+| iOS | 支持 | 支持 | iOS 15.0 |
+| macOS | 支持 | 支持 | macOS 12.0 |
+| Linux / Windows / Web | 不支持 | 不支持 | 不作为稳定平台 |
 
-人脸追踪依赖 `mediapipe_face_mesh` 的原生 FFI 能力。使用前请确认目标平台已由依赖包提供支持。
+相机、权限和原生推理更适合在真机验证。模拟器通常无法提供完整的实时相机与 GPU 环境。
 
 ## 环境要求
 
 - Flutter 3.47.0 或更高版本。
 - Dart 3.13.7 或更高版本。
-- 启用人脸追踪的设备或模拟器。相机通常需要真机验证。
+- 支持目标平台的原生构建环境。
+- Android 或 iOS 真机，或配置好相机权限的 macOS 设备。
 
 ## 安装
 
@@ -41,9 +47,10 @@
 
 ```yaml
 dependencies:
-  flutter_ar: ^0.1.0
+  flutter_ar: ^0.2.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
+  mediapipe_face_mesh: ^3.2.2
   vector_math: ^2.4.4
 ```
 
@@ -52,6 +59,14 @@ dependencies:
 ```sh
 flutter pub get
 ```
+
+库的稳定公开 API 只从以下入口导出：
+
+```dart
+import 'package:flutter_ar/flutter_ar.dart';
+```
+
+请不要直接导入 `package:flutter_ar/src/...`，这些文件不属于兼容性承诺范围。
 
 ## 快速开始
 
@@ -84,7 +99,7 @@ class _FaceArPageState extends State<FaceArPage> {
       scene: scene,
       delegate: const NoseEffectDelegate(),
       cameraLensDirection: CameraLensDirection.front,
-      showsStatistics: true,
+      showTrackingIndicator: true,
     );
   }
 }
@@ -95,7 +110,7 @@ class NoseEffectDelegate extends ArViewDelegate {
   @override
   Node? nodeForFaceAnchor(ArView view, ArFaceAnchor anchor) {
     return Node(name: 'nose-effect')
-      // 默认锚点位于 ARKit 脸部中心，先偏移到鼻尖。
+      // 默认锚点位于脸部中心，沿局部坐标系偏移到鼻尖附近。
       ..position = Vector3(
         0,
         -anchor.faceWidthMeters * 0.16,
@@ -117,8 +132,16 @@ class NoseEffectDelegate extends ArViewDelegate {
 }
 ```
 
-`Scene` 由应用持有并负责释放。`ArView` 只创建和更新人脸锚点，不会释放外部传入的场景。
-默认帧率为 60，相机分辨率为 `high`，并启用 ARKit 风格表情系数。
+`Scene` 由应用创建并释放。`ArView` 只负责创建和更新人脸锚点，不会释放外部传入的场景。
+
+如果只需要直接附着在鼻尖上的内容，可以设置：
+
+```dart
+ArView(
+  scene: scene,
+  anchorOrigin: ArFaceAnchorOrigin.noseTip,
+);
+```
 
 ## 平台配置
 
@@ -169,76 +192,87 @@ class NoseEffectDelegate extends ArViewDelegate {
 <true/>
 ```
 
-## 坐标约定
+完整步骤见 [快速开始](doc/getting-started.md)。
 
-`ArView` 使用 AR 相机空间：
+## 核心概念
+
+### 坐标空间
+
+`ArView` 使用米制相机空间：
 
 - 相机位于原点。
 - `+X` 指向右方。
 - `+Y` 指向上方。
 - `+Z` 指向远离相机的方向。
-- 位置单位为米。
+- 位置和距离单位为米。
 
-人脸内容遵循 Flutter Scene 的局部坐标约定：内容正面朝向局部 `+Z`。模型制作时应让正面沿 `+Z`
-导出，这样头部偏航、俯仰和翻滚会自然地作用到内容上。
+人脸内容使用 Flutter Scene 的局部 `+Z` 朝前约定。模型正面应沿局部 `+Z` 导出，这样头部偏航、
+俯仰和翻滚会自然作用到内容上。
 
-## 核心 API
+### 锚点生命周期
 
-### `ArView`
+1. 相机和 MediaPipe 管线完成初始化。
+2. 检测到人脸后创建 `ArFaceAnchor`。
+3. `ArViewDelegate.nodeForFaceAnchor` 返回要挂载的场景节点。
+4. 后续推理持续更新锚点变换和追踪数据。
+5. 人脸丢失超过 `anchorLostGracePeriod` 后移除锚点和节点。
+6. 应用进入后台时停止相机；恢复前台后自动重新启动。
 
-相机预览、追踪管线与场景渲染的入口组件。主要参数包括：
+### 所有权
 
-- `scene`：应用持有的 Flutter Scene 场景。
-- `controller`：可选的命令式控制器。
-- `delegate`：节点生命周期委托。
-- `faceTrackingEnabled`：是否启用人脸推理。
-- `enableFaceBlendshapes`：是否计算 52 个面部表情系数。
-- `faceAnchorOrigin`：锚点使用脸部中心（默认）或鼻尖。
-- `cameraVerticalFovDegrees`：透视相机垂直视场角。
-- `loadingBuilder`、`errorBuilder`、`onError`：自定义状态与错误处理。
+| 对象 | 创建方 | 释放方 |
+| --- | --- | --- |
+| `Scene` | 应用 | 应用 |
+| `ArViewController` | 应用 | 无需显式释放 |
+| `ArFaceAnchor` | `ArView` | `ArView` |
+| 相机控制器与 MediaPipe 管线 | `ArView` | `ArView` |
 
-### `ArViewController`
-
-提供节点管理、变换设置、投影、反投影和射线检测能力。需要屏幕空间查询时，应先让 `ArView`
-完成挂载。
+### 命令式控制
 
 ```dart
 final controller = ArViewController(scene: scene);
-final faceAnchor = controller.currentFaceAnchor;
-final screenPoint = controller.projectPoint(Vector3(0, 0, 1));
+
+controller.addNode(
+  Node(name: 'marker')..addComponent(
+    MeshComponent(Mesh(CuboidGeometry(Vector3.all(0.1)), material)),
+  ),
+  position: Vector3(0, 0, 1),
+);
+
+ArView(scene: scene, controller: controller);
 ```
 
-### `ArFaceAnchor`
+节点和局部变换操作可以在视图挂载前使用。`camera`、`viewportSize`、`projectPoint`、
+`unprojectPoint`、`hitTest` 和 `hitTestAll` 要求控制器已挂载，否则会抛出 `StateError`。
 
-每次追踪更新后提供：
+## 主要公开 API
 
-- `node`：附着在锚点上的 Flutter Scene 节点。
-- `transform`、`rotation`、`position`：相机空间姿态。
-- `screenPosition`：归一化锚点屏幕位置。
-- `distanceMeters`、`faceWidthMeters`：米制距离与脸宽。
-- `mesh`、`landmarks`、`headPose`：MediaPipe 原始追踪数据。
-- `blendshapes`：启用表情系数后可用。
+| 类型 | 用途 |
+| --- | --- |
+| `ArView` | 相机预览、人脸追踪与 Flutter Scene 渲染入口 |
+| `ArViewDelegate` | 创建人脸节点并接收锚点生命周期回调 |
+| `ArFaceAnchor` | 当前人脸姿态、网格、关键点和表情数据 |
+| `ArViewController` | 场景节点管理和屏幕空间查询 |
+| `ArFacePoseMapper` | 将单个 `FaceMeshResult` 转换为米制相机空间姿态 |
+| `ArFacePose` | 离线映射结果 |
+| `ArViewException` | 统一的相机、追踪和模型错误类型 |
+| `ArViewErrorCode` | 可供程序处理的错误分类 |
 
-### `ArFacePoseMapper`
+完整参数、默认值和异常约定见 [API 参考](doc/api-reference.md)。
 
-无需启动相机，即可将单个 `FaceMeshResult` 映射到相同的米制相机空间。适合静态图片验证、
-离线处理或自定义渲染管线。
+## 性能建议
 
-完整说明见 [API 参考](doc/api-reference.md)。
+- 优先从 30 FPS 和 `ResolutionPreset.medium` 开始验证，再按设备能力提高。
+- 不需要表情数据时关闭 `enableFaceBlendshapes`。
+- 避免在每帧回调中创建节点、加载纹理或执行同步 I/O。
+- 控制透明材质、后处理和网格复杂度。
+- 在低端设备上降低 `preferredFramesPerSecond`，不要只依赖渲染帧率限制。
 
-## 静态图片验证
+更多建议见 [性能指南](doc/performance.md)。
 
-示例应用包含真实 MediaPipe 检测器、网格模型、几何求解和 Flutter Scene 姿态映射的静态图片
-验证流程，不需要相机：
+## 示例与静态图片验证
 
-```sh
-cd example
-flutter run -d macos --dart-define=FACE_IMAGE_TEST=true
-```
-
-验证界面会同时绘制人脸网格、脸部中心锚点投影和三维猪头，便于检查坐标系和朝向回归。
-
-## 运行示例
+运行实时相机示例：
 
 ```sh
 cd example
@@ -246,12 +280,21 @@ flutter pub get
 flutter run -d macos
 ```
 
-或选择可用的 Android/iOS 设备：
+或查看可用设备后运行：
 
 ```sh
 flutter devices
 flutter run -d <设备 ID>
 ```
+
+示例还包含无需相机的静态图片验证流程：
+
+```sh
+cd example
+flutter run -d macos --dart-define=FACE_IMAGE_TEST=true
+```
+
+该模式会运行真实的 MediaPipe 模型和 Flutter Scene 姿态映射，便于排查坐标系、朝向和投影问题。
 
 ## 测试
 
@@ -259,7 +302,7 @@ flutter run -d <设备 ID>
 ./tool/test.sh
 ```
 
-脚本会启用 Flutter GPU 与 Impeller，并依次运行库测试和示例测试。也可以单独运行：
+脚本会启用 Flutter GPU 与 Impeller，并运行库测试和示例测试。也可以单独执行：
 
 ```sh
 dart format --output=none --set-exit-if-changed lib test example/lib example/test
@@ -267,48 +310,43 @@ flutter analyze
 flutter test --enable-flutter-gpu --enable-impeller
 ```
 
-## 项目结构
+## 文档
 
-```text
-flutter_ar/
-├── lib/
-│   ├── flutter_ar.dart          # 唯一公开入口
-│   └── src/                     # 公开类型与内部实现
-├── doc/                         # 中文指南与 API 文档
-├── example/                     # 可运行示例
-├── test/                        # 单元与组件测试
-├── tool/                        # 开发脚本
-└── .github/                     # CI、Issue 与 PR 模板
-```
+- [文档导航](doc/README.md)
+- [快速开始](doc/getting-started.md)
+- [API 参考](doc/api-reference.md)
+- [架构说明](doc/architecture.md)
+- [性能指南](doc/performance.md)
+- [平台与能力限制](doc/limitations.md)
+- [故障排查](doc/troubleshooting.md)
+- [迁移指南](doc/migration-guide.md)
+- [发布流程](doc/release-process.md)
 
-## API 迁移
+## 版本与兼容性
 
-`0.1.0` 起使用 Dart 风格命名：
+项目遵循语义化版本。`0.x` 阶段仍可能调整公开 API，但破坏性变更会提升次版本号，并在
+`CHANGELOG.md` 和迁移指南中给出替代写法。
 
-| 旧名称 | 新名称 | 状态 |
-| --- | --- | --- |
-| `ARView` | `ArView` | 旧名称已弃用，临时保留兼容别名 |
-| `ARViewController` | `ArViewController` | 旧名称已弃用，临时保留兼容别名 |
-| `isFaceTrackingEnabled` | `faceTrackingEnabled` | 旧参数已弃用，临时保留兼容 |
-| `ArViewController.pointOfView` | `ArViewController.camera` | 旧 getter 已弃用 |
+公开兼容范围包括：
 
-默认行为同步对齐 ARKit：
+- `package:flutter_ar/flutter_ar.dart` 导出的类型和成员。
+- README 与 `doc/` 中明确描述的行为。
+- 错误码、回调时序和资源所有权约定。
 
-| 0.0.1 默认值 | 0.1.0 默认值 |
-| --- | --- |
-| `ArFaceAnchorOrigin.noseTip` | `ArFaceAnchorOrigin.faceCenter` |
-| 30 FPS | 60 FPS |
-| `ResolutionPreset.medium` | `ResolutionPreset.high` |
-| 关闭 `enableFaceBlendshapes` | 开启 `enableFaceBlendshapes` |
+不包含：
 
-新代码应始终导入 `package:flutter_ar/flutter_ar.dart`，不要依赖 `lib/src` 中的实现文件。
+- `lib/src/` 中的未导出实现。
+- 原生插件内部实现和通道名称。
+- 第三方依赖自身的 API。
 
-## 贡献与支持
+## 贡献
 
-- 开发流程见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-- 使用问题见 [SUPPORT.md](SUPPORT.md)。
-- 安全问题见 [SECURITY.md](SECURITY.md)。
-- 行为准则见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+欢迎提交缺陷报告、文档修正和实现贡献。开始前请阅读：
+
+- [贡献指南](CONTRIBUTING.md)
+- [支持说明](SUPPORT.md)
+- [安全策略](SECURITY.md)
+- [行为准则](CODE_OF_CONDUCT.md)
 
 ## 许可证
 

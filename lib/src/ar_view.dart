@@ -3,8 +3,8 @@ import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:camera_macos/camera_macos.dart';
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:flutter/services.dart' show DeviceOrientation;
 import 'package:flutter/widgets.dart' hide Matrix4;
 import 'package:flutter_scene/scene.dart' hide CameraController;
@@ -19,6 +19,12 @@ import 'ar_view_layout.dart';
 typedef ArViewLoadingBuilder = Widget Function(
   BuildContext context,
   double progress,
+);
+
+/// 接收 [ArView] 运行期间未包装异常的处理器。
+typedef ArViewErrorCallback = void Function(
+  Object error,
+  StackTrace stackTrace,
 );
 
 /// 构建相机访问或人脸追踪失败时显示的错误界面。
@@ -85,8 +91,9 @@ class ArViewException implements Exception {
 
 /// 接收 [ArView] 节点与人脸锚点生命周期回调的委托。
 ///
-/// 其职责类似 `ARSCNViewDelegate`：视图负责人脸追踪和锚点更新，委托负责
-/// 提供放置在锚点上的场景节点。
+/// 视图负责人脸追踪和锚点更新，委托负责创建并管理放置在锚点上的场景节点。
+/// 一个视图只能使用一个委托；需要在运行时切换节点时，可通过
+/// [ArView.controller] 操作场景。
 abstract class ArViewDelegate {
   /// 创建 AR 视图委托。
   const ArViewDelegate();
@@ -170,13 +177,8 @@ class ArViewController {
 
   /// 用于渲染 AR 场景的透视相机。
   ///
-  /// 这是 Flutter Scene 中与 `ARSCNView.pointOfView` 对应的能力。
   /// 视图尚未挂载时调用会抛出 [StateError]。
   PerspectiveCamera get camera => _requireView().camera;
-
-  /// [camera] 的旧名称。
-  @Deprecated('请使用 camera。')
-  Camera get pointOfView => camera;
 
   /// 重新启动相机与人脸追踪。
   ///
@@ -306,7 +308,6 @@ class ArViewController {
 
   /// 将世界空间点投影为逻辑视口坐标。
   ///
-  /// 对应 Flutter Scene 中的 `ARSCNView.projectPoint`。
   /// 点位于相机平面或其后方时返回 `null`。
   Offset? projectPoint(Vector3 point) {
     final _ArViewState view = _requireView();
@@ -318,7 +319,7 @@ class ArViewController {
 
   /// 将逻辑视口点转换为距离相机 [distance] 米的世界空间点。
   ///
-  /// 对应没有深度图时 `ARSCNView.unprojectPoint` 的能力。
+  /// 此方法假设目标点在给定深度平面上，不执行真实深度检测。
   /// 视图尚未挂载时抛出 [StateError]。
   Vector3 unprojectPoint(Offset point, {double distance = 1.0}) {
     if (!distance.isFinite || distance <= 0) {
@@ -330,8 +331,7 @@ class ArViewController {
 
   /// 返回 [point] 下方最近的已渲染表面；没有命中时返回 `null`。
   ///
-  /// 此方法执行网格射线检测，是没有 ARKit 深度图时最接近
-  /// `ARSCNView.hitTest(_:options:)` 的能力。
+  /// 此方法对场景执行网格射线检测，不包含相机画面或环境深度信息。
   SceneRaycastHit? hitTest(Offset point) {
     final _ArViewState view = _requireView();
     if (view._viewportSize.isEmpty) {
@@ -446,6 +446,9 @@ class ArFaceAnchor {
   /// 当前锚点旋转。
   Quaternion get rotation => _rotation.clone();
 
+  /// 当前锚点在 AR 相机空间中的位置，单位为米。
+  Vector3 get position => _transform.getTranslation();
+
   /// 锚点在归一化显示坐标中的位置，原点位于左上角。
   Offset get screenPosition => _screenPosition;
 
@@ -461,10 +464,10 @@ class ArFaceAnchor {
   /// 当前头部旋转估计。
   FaceMeshHeadPose get headPose => _headPose!;
 
-  /// 当前帧的 52 个 ARKit 风格面部系数。
+  /// 当前帧的 MediaPipe 面部表情系数。
   ///
-  /// 仅在启用 [ArView.enableFaceBlendshapes] 时非空。系数类别与 ARKit
-  /// 人脸锚点直接对应，便于迁移 ARKit 表情逻辑。
+  /// 仅在启用 [ArView.enableFaceBlendshapes] 时非空。关键名和数量由
+  /// MediaPipe Face Landmarker 提供，可用于驱动表情动画。
   FaceBlendshapes? get blendshapes => _blendshapes;
 
   /// 当前帧的全部 478 个人脸关键点。
@@ -491,13 +494,13 @@ class ArFaceAnchor {
   }
 }
 
-/// 基于相机的人脸 AR 视图，设计灵感来自 `ARSCNView`。
+/// 基于相机的人脸 AR 视图。
 ///
 /// [ArView] 负责相机预览、MediaPipe 人脸追踪，以及将人脸关键点映射到
 /// Flutter Scene 透视相机。[scene] 由应用持有。检测到人脸时，视图会创建
 /// 一个持久的 [ArFaceAnchor.node] 并在每次推理后更新其变换。默认锚点位于
-/// 脸部中心，与 ARKit 的人脸锚点坐标一致；需要鼻尖锚点时可显式将
-/// [faceAnchorOrigin] 设为 [ArFaceAnchorOrigin.noseTip]。
+/// 脸部中心；需要鼻尖锚点时可显式将 [anchorOrigin] 设为
+/// [ArFaceAnchorOrigin.noseTip]。
 ///
 /// 人脸追踪在独立工作 isolate 中运行。创建相机控制器前，视图会通过
 /// `permission_handler` 请求相机权限。
@@ -514,17 +517,15 @@ class ArView extends StatefulWidget {
     this.cameraVerticalFovDegrees = 63,
     this.preferredFramesPerSecond = 60,
     this.anchorLostGracePeriod = const Duration(milliseconds: 350),
-    bool faceTrackingEnabled = true,
-    @Deprecated('请改用 faceTrackingEnabled。') bool? isFaceTrackingEnabled,
+    this.faceTrackingEnabled = true,
     this.enableFaceBlendshapes = true,
-    this.faceAnchorOrigin = ArFaceAnchorOrigin.faceCenter,
+    this.anchorOrigin = ArFaceAnchorOrigin.faceCenter,
     this.showCameraPreview = true,
-    this.showsStatistics = false,
+    this.showTrackingIndicator = false,
     this.loadingBuilder,
     this.errorBuilder,
     this.onError,
-  }) : faceTrackingEnabled = isFaceTrackingEnabled ?? faceTrackingEnabled,
-       assert(
+  }) : assert(
          cameraVerticalFovDegrees > 0 && cameraVerticalFovDegrees < 180,
          'cameraVerticalFovDegrees 必须大于 0 且小于 180。',
        ),
@@ -550,8 +551,8 @@ class ArView extends StatefulWidget {
 
   /// 请求的相机分辨率。
   ///
-  /// 默认使用 [ResolutionPreset.high]，以获得与 ARKit 人脸追踪相近的
-  /// 相机图像质量。
+  /// 默认使用 [ResolutionPreset.high]。提高分辨率通常能改善小脸或远处
+  /// 人脸的追踪质量，但也会增加相机、格式转换和推理开销。
   final ResolutionPreset cameraResolution;
 
   /// 追踪透视相机使用的垂直视场角。
@@ -562,8 +563,8 @@ class ArView extends StatefulWidget {
 
   /// 相机、人脸追踪和场景渲染的首选帧率。
   ///
-  /// 默认值为 60，与 ARKit/ARSCNView 的默认帧率保持一致。相机帧会按此
-  /// 频率采样后送入 MediaPipe，Flutter Scene 也会限制到相同帧率。
+  /// 相机帧会按此频率采样后送入 MediaPipe，Flutter Scene 也会限制到相同
+  /// 帧率。移动设备上的实际帧率仍受相机、推理耗时和渲染负载限制。
   final int preferredFramesPerSecond;
 
   /// 人脸丢失后保留锚点的时间。
@@ -572,24 +573,25 @@ class ArView extends StatefulWidget {
   /// 是否启用人脸推理。
   final bool faceTrackingEnabled;
 
-  /// 是否计算 MediaPipe 的 52 个 ARKit 风格面部系数。
+  /// 是否计算 MediaPipe 面部表情系数。
   ///
-  /// 默认开启，以保持与 ARKit 人脸锚点一致的表情数据能力。该选项会增加
-  /// 每帧推理开销；不需要表情时建议显式关闭。最新系数可通过
-  /// [ArFaceAnchor.blendshapes] 获取。
+  /// 该选项会增加每帧推理开销；不需要表情时建议显式关闭。最新系数可通过
+  /// [ArFaceAnchor.blendshapes] 获取。默认开启，以提供开箱即用的表情数据。
   final bool enableFaceBlendshapes;
 
-  /// [ArFaceAnchor.node] 和 [ArFaceAnchor.transform] 使用的原点。
+  /// [ArFaceAnchor.node] 和 [ArFaceAnchor.transform] 使用的锚点原点。
   ///
-  /// 默认使用 [ArFaceAnchorOrigin.faceCenter]，与 ARKit 脸部中心坐标一致。
-  /// 需要直接定位鼻部挂件时，可切换为 [ArFaceAnchorOrigin.noseTip]。
-  final ArFaceAnchorOrigin faceAnchorOrigin;
+  /// 默认使用 [ArFaceAnchorOrigin.faceCenter]。需要直接定位鼻部挂件时，
+  /// 可切换为 [ArFaceAnchorOrigin.noseTip]。
+  final ArFaceAnchorOrigin anchorOrigin;
 
   /// 是否在场景后方显示实时相机画面。
   final bool showCameraPreview;
 
   /// 是否在人脸尚未追踪到时显示小型活动指示器。
-  final bool showsStatistics;
+  ///
+  /// 该选项不会显示帧率、人脸数量或其他性能统计。
+  final bool showTrackingIndicator;
 
   /// 可选的自定义加载界面。当前相机启动进度固定为 0。
   final ArViewLoadingBuilder? loadingBuilder;
@@ -598,19 +600,11 @@ class ArView extends StatefulWidget {
   final ArViewErrorBuilder? errorBuilder;
 
   /// 报告相机和追踪错误。
-  final void Function(Object error, StackTrace stackTrace)? onError;
+  final ArViewErrorCallback? onError;
 
   @override
   State<ArView> createState() => _ArViewState();
 }
-
-/// [ArViewController] 的旧 Apple 风格名称。
-@Deprecated('请使用 ArViewController。')
-typedef ARViewController = ArViewController;
-
-/// [ArView] 的旧 Apple 风格名称。
-@Deprecated('请使用 ArView。')
-typedef ARView = ArView;
 
 Future<FaceMeshInferencePipeline> _createFaceMeshPipeline(
   FaceMeshModel model,
@@ -689,6 +683,9 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
       unawaited(_start());
     }
     if (oldWidget.faceTrackingEnabled && !widget.faceTrackingEnabled) {
+      _removeFaceAnchor();
+    }
+    if (oldWidget.anchorOrigin != widget.anchorOrigin) {
       _removeFaceAnchor();
     }
     if (oldWidget.enableFaceBlendshapes && !widget.enableFaceBlendshapes) {
@@ -1229,7 +1226,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     }
     final ArFacePose? pose = ArFacePoseMapper(
       verticalFovDegrees: widget.cameraVerticalFovDegrees,
-      anchorOrigin: widget.faceAnchorOrigin,
+      anchorOrigin: widget.anchorOrigin,
     ).map(mesh, viewportSize: _viewportSize);
     if (pose == null) {
       _markFaceLost();
@@ -1240,7 +1237,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     final ArFaceAnchor anchor = _faceAnchor ??= ArFaceAnchor._(
       _nextAnchorId++,
       Node(name: 'ar_face_anchor_${_nextAnchorId - 1}'),
-      widget.faceAnchorOrigin,
+      widget.anchorOrigin,
     );
     anchor._update(
       transform: pose.transform,
@@ -1301,7 +1298,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
         _debugTraceSceneAnchor(anchor, 'update');
       }
     }
-    _refreshStatistics();
+    _refreshTrackingIndicator();
   }
 
   WidgetComponent? _findFirstWidgetComponent(Node node) {
@@ -1434,7 +1431,7 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
         }
       });
     }
-    _refreshStatistics();
+    _refreshTrackingIndicator();
   }
 
   void _removeFaceAnchor({Scene? scene, bool notify = true}) {
@@ -1448,12 +1445,12 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
       _safeDelegateCall(() {
         widget.delegate?.didRemoveNode(widget, anchor);
       });
-      _refreshStatistics();
+      _refreshTrackingIndicator();
     }
   }
 
-  void _refreshStatistics() {
-    if (mounted && widget.showsStatistics) {
+  void _refreshTrackingIndicator() {
+    if (mounted && widget.showTrackingIndicator) {
       _setState(() {});
     }
   }
@@ -1651,7 +1648,8 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
               ),
               if (_initializing && _error == null) _buildLoading(context),
               if (_error != null) _buildError(context, _error!),
-              if (widget.showsStatistics) _buildStatistics(context),
+              if (widget.showTrackingIndicator)
+                _buildTrackingIndicator(context),
             ],
           ),
         );
@@ -1706,7 +1704,10 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     return Center(
       child:
           widget.loadingBuilder?.call(context, 0.0) ??
-          const CupertinoActivityIndicator(radius: 14),
+          const SizedBox.square(
+            dimension: 28,
+            child: material.CircularProgressIndicator(strokeWidth: 2.5),
+          ),
     );
   }
 
@@ -1725,13 +1726,52 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
     if (custom != null) {
       return custom;
     }
-    return const ColoredBox(
-      color: Color(0xE6000000),
-      child: Center(child: CupertinoActivityIndicator(radius: 14)),
+    return ColoredBox(
+      color: const Color(0xE6000000),
+      child: material.Material(
+        type: material.MaterialType.transparency,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  error.message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFFFFFFFF),
+                    fontSize: 16,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 8,
+                  children: <Widget>[
+                    material.TextButton(
+                      onPressed: retry,
+                      child: const Text('重试'),
+                    ),
+                    if (error.canOpenSettings)
+                      material.TextButton(
+                        onPressed: () {
+                          unawaited(settings());
+                        },
+                        child: const Text('打开设置'),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildStatistics(BuildContext context) {
+  Widget _buildTrackingIndicator(BuildContext context) {
     if (_faceAnchor != null) {
       return const SizedBox.shrink();
     }
@@ -1740,7 +1780,12 @@ class _ArViewState extends State<ArView> with WidgetsBindingObserver {
         alignment: Alignment.topRight,
         child: Padding(
           padding: EdgeInsets.all(12),
-          child: IgnorePointer(child: CupertinoActivityIndicator(radius: 8)),
+          child: IgnorePointer(
+            child: SizedBox.square(
+              dimension: 16,
+              child: material.CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
         ),
       ),
     );

@@ -1,4 +1,4 @@
-import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_ar/flutter_ar.dart';
 import 'package:flutter_scene/scene.dart';
 import 'package:vector_math/vector_math.dart' show Vector3;
@@ -105,7 +105,7 @@ class _ArDemoPageState extends State<ArDemoPage> {
             scene: _scene,
             controller: _arController,
             delegate: const NosePigDelegate(),
-            showsStatistics: true,
+            showTrackingIndicator: true,
           ),
           const IgnorePointer(
             child: SafeArea(
@@ -300,7 +300,7 @@ class _ControlButton extends StatelessWidget {
   }
 }
 
-/// 从 ARKit 脸部中心锚点偏移并放置鼻尖小猪。
+/// 从脸部中心锚点偏移并放置鼻尖小猪。
 class NosePigDelegate extends ArViewDelegate {
   const NosePigDelegate();
 

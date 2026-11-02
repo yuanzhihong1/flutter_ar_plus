@@ -1,9 +1,25 @@
-# 发布包不包含本地生成目录与可由 Flutter 工具重新生成的示例文件。
+# 发布包只包含使用库所需源码、公开文档和示例源文件。
+# 生成目录、本地 IDE 配置和构建缓存不应进入 pub 包。
+.dart_tool/
+build/
+coverage/
 doc/api/
+*.iml
+.idea/
+
+# 示例应用的生成文件与依赖缓存。
 example/.dart_tool/
 example/.flutter-plugins-dependencies
 example/build/
+example/ios/Podfile
+example/ios/Pods/
+example/ios/.symlinks/
 example/ios/Flutter/ephemeral/
+example/ios/Flutter/Generated.xcconfig
+example/macos/Podfile
+example/macos/Pods/
+example/macos/.symlinks/
 example/macos/Flutter/ephemeral/
+example/macos/Flutter/Generated.xcconfig
 example/android/.gradle/
 example/android/local.properties
