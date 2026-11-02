@@ -24,7 +24,7 @@ flutter devices
 dependencies:
   flutter:
     sdk: flutter
-  flutter_ar_plus: ^0.2.0
+  flutter_ar_plus: ^1.0.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
   mediapipe_face_mesh: ^3.2.2

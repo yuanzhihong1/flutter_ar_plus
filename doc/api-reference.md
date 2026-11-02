@@ -312,7 +312,7 @@ class ArViewException implements Exception {
 
 ## 兼容性说明
 
-公开 API 会在 `CHANGELOG.md` 中记录变更。`0.x` 阶段破坏性变更可能出现在次版本中，迁移方式
-见 [迁移指南](migration-guide.md)。
+公开 API 会在 `CHANGELOG.md` 中记录变更。自 `1.0.0` 起，不兼容的公开 API 变更会提升主版本号，
+迁移方式见 [迁移指南](migration-guide.md)。
 
 库内 `lib/src/` 文件、原生通道名称和平台插件内部类不属于公开兼容范围。

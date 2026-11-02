@@ -8,8 +8,9 @@
 `flutter_ar_plus` 是一个面向 Flutter 的实时人脸 AR 叠加库。它将相机预览、MediaPipe Face Mesh
 与 Flutter Scene 组合起来，为三维模型、程序化网格和 Widget 提供持续更新的人脸锚点。
 
-项目目前处于 `0.x` 阶段，公开 API 已按 Dart 与 Flutter 的常见约定整理。版本语义、兼容策略和
-破坏性变更记录见 [更新日志](CHANGELOG.md) 与 [迁移指南](doc/migration-guide.md)。
+项目已发布 `1.0.0` 正式版，公开 API 已按 Dart 与 Flutter 的常见约定整理，并从 `1.0.0` 起进入
+1.x 兼容周期。版本语义、兼容策略和破坏性变更记录见 [更新日志](CHANGELOG.md) 与
+[迁移指南](doc/migration-guide.md)。
 
 ## 特性
 
@@ -47,7 +48,7 @@
 
 ```yaml
 dependencies:
-  flutter_ar_plus: ^0.2.0
+  flutter_ar_plus: ^1.0.0
   camera: ^0.12.2
   flutter_scene: ^0.24.3
   mediapipe_face_mesh: ^3.2.2
@@ -324,7 +325,7 @@ flutter test --enable-flutter-gpu --enable-impeller
 
 ## 版本与兼容性
 
-项目遵循语义化版本。`0.x` 阶段仍可能调整公开 API，但破坏性变更会提升次版本号，并在
+项目遵循语义化版本。自 `1.0.0` 起，不兼容的公开 API 变更会提升主版本号，并在
 `CHANGELOG.md` 和迁移指南中给出替代写法。
 
 公开兼容范围包括：

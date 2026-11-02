@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_ar_plus'
-  s.version          = '0.2.0'
+  s.version          = '1.0.0'
   s.summary          = 'Flutter 实时人脸 AR 叠加库。'
   s.description      = <<-DESC
 基于 camera、MediaPipe Face Mesh、Flutter Scene 和 vector_math
